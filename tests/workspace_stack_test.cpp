@@ -151,3 +151,22 @@ TEST_CASE("swapCurrentWithPrev swaps stable order and wraps at the beginning") {
     REQUIRE(stack.windows()[2].address == "0x1");
     REQUIRE(stack.current() == std::optional<std::string>{"0x1"});
 }
+
+TEST_CASE("swapCurrentWithNext and swapCurrentWithPrev fail without focused current window") {
+    hyprstack::WorkspaceStack stack;
+
+    stack.addWindow(makeWindow("0x1"));
+    stack.addWindow(makeWindow("0x2"));
+
+    REQUIRE_FALSE(stack.swapCurrentWithNext());
+    REQUIRE_FALSE(stack.swapCurrentWithPrev());
+}
+
+TEST_CASE("swapCurrentWithNext and swapCurrentWithPrev fail with a single window") {
+    hyprstack::WorkspaceStack stack;
+
+    stack.focusWindow(makeWindow("0x1"));
+
+    REQUIRE_FALSE(stack.swapCurrentWithNext());
+    REQUIRE_FALSE(stack.swapCurrentWithPrev());
+}
