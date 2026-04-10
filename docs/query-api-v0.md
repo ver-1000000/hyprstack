@@ -96,6 +96,22 @@ skeleton 実装では plugin 側で `hyprstack` command handler を登録する
 
 ### 空 stack の扱い
 
+active workspace が解決できていて、その workspace に window がない場合は `workspace` を残す
+
+```json
+{
+  "workspace": {
+    "id": 9,
+    "name": "9"
+  },
+  "current": null,
+  "last": null,
+  "windows": []
+}
+```
+
+active workspace 自体が解決できない場合は `workspace` は `null` になる
+
 ```json
 {
   "workspace": null,

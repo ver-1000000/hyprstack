@@ -18,9 +18,14 @@ struct ObservedWindow {
     std::optional<size_t> historyIndex;
 };
 
+struct ObservedWorkspace {
+    int         id;
+    std::string name;
+};
+
 class PluginState {
   public:
-    void sync(const std::vector<ObservedWindow>& windows, std::optional<int> activeWorkspaceId);
+    void sync(const std::vector<ObservedWindow>& windows, const std::vector<ObservedWorkspace>& workspaces, std::optional<int> activeWorkspaceId);
     [[nodiscard]] QuerySnapshot snapshotForWorkspace(std::optional<int> workspaceId = std::nullopt) const;
 
   private:

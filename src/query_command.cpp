@@ -139,9 +139,9 @@ returns:
     stack around     -> prev/next/last around the current window
 
 notes:
-    this is the v0 skeleton implementation
-    window tracking is not implemented yet
-    all commands currently return the fixed JSON shape from docs/query-api-v0.md
+    query api v0 is implemented for the active workspace
+    responses follow docs/query-api-v0.md
+    direct hyprctl invocation is not wired yet in the local environment
 )help";
 }
 

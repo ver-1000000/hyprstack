@@ -11,6 +11,10 @@ TEST_CASE("PluginState builds active workspace snapshot from observed windows") 
             {.workspaceId = 1, .workspaceName = "1", .address = "0x2", .className = "thunar", .title = "two", .focused = true, .historyIndex = 1},
             {.workspaceId = 2, .workspaceName = "2", .address = "0x3", .className = "firefox", .title = "three", .focused = false, .historyIndex = 2},
         },
+        {
+            {.id = 1, .name = "1"},
+            {.id = 2, .name = "2"},
+        },
         1
     );
 
@@ -31,6 +35,9 @@ TEST_CASE("PluginState preserves stable order across syncs and removes missing w
             {.workspaceId = 1, .workspaceName = "1", .address = "0x1", .className = "ghostty", .title = "one", .focused = true, .historyIndex = 1},
             {.workspaceId = 1, .workspaceName = "1", .address = "0x2", .className = "thunar", .title = "two", .focused = false, .historyIndex = 0},
         },
+        {
+            {.id = 1, .name = "1"},
+        },
         1
     );
 
@@ -38,6 +45,9 @@ TEST_CASE("PluginState preserves stable order across syncs and removes missing w
         {
             {.workspaceId = 1, .workspaceName = "main", .address = "0x2", .className = "thunar", .title = "two updated", .focused = false, .historyIndex = 1},
             {.workspaceId = 1, .workspaceName = "main", .address = "0x3", .className = "firefox", .title = "three", .focused = true, .historyIndex = 2},
+        },
+        {
+            {.id = 1, .name = "main"},
         },
         1
     );
@@ -62,6 +72,9 @@ TEST_CASE("PluginState moves a window between workspaces") {
             {.workspaceId = 1, .workspaceName = "1", .address = "0x1", .className = "ghostty", .title = "one", .focused = true, .historyIndex = 1},
             {.workspaceId = 1, .workspaceName = "1", .address = "0x2", .className = "thunar", .title = "two", .focused = false, .historyIndex = 0},
         },
+        {
+            {.id = 1, .name = "1"},
+        },
         1
     );
 
@@ -69,6 +82,10 @@ TEST_CASE("PluginState moves a window between workspaces") {
         {
             {.workspaceId = 1, .workspaceName = "1", .address = "0x1", .className = "ghostty", .title = "one", .focused = true, .historyIndex = 1},
             {.workspaceId = 2, .workspaceName = "2", .address = "0x2", .className = "thunar", .title = "two", .focused = false, .historyIndex = 0},
+        },
+        {
+            {.id = 1, .name = "1"},
+            {.id = 2, .name = "2"},
         },
         1
     );
@@ -92,6 +109,9 @@ TEST_CASE("PluginState falls back to explicit workspace when active workspace is
         {
             {.workspaceId = 7, .workspaceName = "scratch", .address = "0xaa", .className = "ghostty", .title = "shell", .focused = false, .historyIndex = std::nullopt},
         },
+        {
+            {.id = 7, .name = "scratch"},
+        },
         std::nullopt
     );
 
@@ -112,6 +132,9 @@ TEST_CASE("PluginState updates workspace name without losing stack order") {
             {.workspaceId = 5, .workspaceName = "old", .address = "0x1", .className = "ghostty", .title = "one", .focused = true, .historyIndex = 0},
             {.workspaceId = 5, .workspaceName = "old", .address = "0x2", .className = "thunar", .title = "two", .focused = false, .historyIndex = std::nullopt},
         },
+        {
+            {.id = 5, .name = "old"},
+        },
         5
     );
 
@@ -119,6 +142,9 @@ TEST_CASE("PluginState updates workspace name without losing stack order") {
         {
             {.workspaceId = 5, .workspaceName = "new", .address = "0x1", .className = "ghostty", .title = "one", .focused = true, .historyIndex = 0},
             {.workspaceId = 5, .workspaceName = "new", .address = "0x2", .className = "thunar", .title = "two", .focused = false, .historyIndex = std::nullopt},
+        },
+        {
+            {.id = 5, .name = "new"},
         },
         5
     );
@@ -139,12 +165,18 @@ TEST_CASE("PluginState updates window metadata in place") {
         {
             {.workspaceId = 3, .workspaceName = "3", .address = "0xaa", .className = "ghostty", .title = "old title", .focused = true, .historyIndex = 0},
         },
+        {
+            {.id = 3, .name = "3"},
+        },
         3
     );
 
     state.sync(
         {
             {.workspaceId = 3, .workspaceName = "3", .address = "0xaa", .className = "ghostty", .title = "new title", .focused = true, .historyIndex = 0},
+        },
+        {
+            {.id = 3, .name = "3"},
         },
         3
     );
@@ -153,4 +185,19 @@ TEST_CASE("PluginState updates window metadata in place") {
 
     REQUIRE(snapshot.stack.windows().size() == 1);
     REQUIRE(snapshot.stack.windows()[0].title == "new title");
+}
+
+TEST_CASE("PluginState keeps empty active workspace metadata") {
+    hyprstack::PluginState state;
+
+    state.sync({}, {{.id = 9, .name = "9"}}, 9);
+
+    const auto snapshot = state.snapshotForWorkspace();
+
+    REQUIRE(snapshot.workspace.has_value());
+    REQUIRE(snapshot.workspace->id == 9);
+    REQUIRE(snapshot.workspace->name == "9");
+    REQUIRE(snapshot.stack.windows().empty());
+    REQUIRE_FALSE(snapshot.stack.current().has_value());
+    REQUIRE_FALSE(snapshot.stack.last().has_value());
 }

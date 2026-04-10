@@ -84,9 +84,27 @@ std::vector<hyprstack::ObservedWindow> observeWindows() {
     return observed;
 }
 
+std::vector<hyprstack::ObservedWorkspace> observeWorkspaces() {
+    std::vector<hyprstack::ObservedWorkspace> observed;
+
+    for (const auto& workspaceRef : g_pCompositor->getWorkspaces()) {
+        const auto workspace = workspaceRef.lock();
+
+        if (!valid(workspace))
+            continue;
+
+        observed.push_back({
+            .id   = static_cast<int>(workspace->m_id),
+            .name = workspace->m_name,
+        });
+    }
+
+    return observed;
+}
+
 hyprstack::QuerySnapshot currentSnapshot() {
     if (G_STATE_DIRTY) {
-        G_STATE.sync(observeWindows(), activeWorkspaceId());
+        G_STATE.sync(observeWindows(), observeWorkspaces(), activeWorkspaceId());
         G_STATE_DIRTY = false;
     }
 

@@ -5,8 +5,28 @@
 
 namespace hyprstack {
 
-void PluginState::sync(const std::vector<ObservedWindow>& windows, const std::optional<int> activeWorkspaceId) {
+void PluginState::sync(
+    const std::vector<ObservedWindow>& windows, const std::vector<ObservedWorkspace>& workspaces, const std::optional<int> activeWorkspaceId
+) {
     m_activeWorkspaceId = activeWorkspaceId;
+
+    for (const auto& workspace : workspaces) {
+        auto* existing = findWorkspace(workspace.id);
+
+        if (!existing) {
+            m_workspaces.push_back(WorkspaceState{
+                .workspace =
+                    {
+                        .id   = workspace.id,
+                        .name = workspace.name,
+                    },
+                .stack = {},
+            });
+            continue;
+        }
+
+        existing->workspace.name = workspace.name;
+    }
 
     for (const auto& window : windows) {
         auto* workspace = findWorkspace(window.workspaceId);
@@ -77,7 +97,15 @@ void PluginState::sync(const std::vector<ObservedWindow>& windows, const std::op
         }
     }
 
-    std::erase_if(m_workspaces, [](const WorkspaceState& workspace) { return workspace.stack.windows().empty(); });
+    std::vector<int> observedWorkspaceIds;
+    observedWorkspaceIds.reserve(workspaces.size());
+
+    for (const auto& workspace : workspaces)
+        observedWorkspaceIds.push_back(workspace.id);
+
+    std::erase_if(m_workspaces, [&observedWorkspaceIds](const WorkspaceState& workspace) {
+        return workspace.stack.windows().empty() && !std::ranges::contains(observedWorkspaceIds, workspace.workspace.id);
+    });
 }
 
 QuerySnapshot PluginState::snapshotForWorkspace(const std::optional<int> workspaceId) const {

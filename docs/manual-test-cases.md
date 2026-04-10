@@ -23,6 +23,18 @@
 - `workspace.id` と `workspace.name` が active workspace と一致する
 - `current` が active window の address と一致する
 
+## empty workspace
+
+1. active workspace を空の workspace に切り替える
+2. `scripts/query.sh stack list` を実行する
+3. `scripts/query.sh stack current` を実行する
+
+期待:
+
+- `workspace.id` と `workspace.name` は active workspace を返す
+- `windows` は空配列になる
+- `current` と `last` は `null` になる
+
 ## 2 window focus
 
 1. 同じ workspace に window を 2 つ開く
