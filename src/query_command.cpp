@@ -140,7 +140,7 @@ returns:
 
 notes:
     query api v0 is implemented for the active workspace
-    responses follow docs/query-api-v0.md
+    responses use the JSON shapes described in the README
     direct hyprctl invocation is not wired yet in the local environment
 )help";
 }

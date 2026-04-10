@@ -48,6 +48,8 @@ The query side is intended for scripts, debugging, and integrations.
 - `hyprctl hyprstack stack current`
 - `hyprctl hyprstack stack around`
 
+`stack around` returns stable-order neighbors as `prev` and `next`, while `last` remains the last-focused window independently of stable order.
+
 Example output:
 
 ```json
@@ -74,6 +76,8 @@ The dispatcher side is intended for direct keybind integration.
 - `stackfocus, last`
 - `stackswap, next`
 - `stackswap, prev`
+
+`stackswap` swaps the current window with its stable-order neighbor, wraps at the ends, and updates the resulting order for subsequent stack actions.
 
 Example config:
 

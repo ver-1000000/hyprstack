@@ -48,6 +48,8 @@ script や debug 用の読み取り API です。
 - `hyprctl hyprstack stack current`
 - `hyprctl hyprstack stack around`
 
+`stack around` の `prev` と `next` は stable order 上の隣接を返し、`last` は stable order とは独立した直前の focused window を返します。
+
 出力イメージ:
 
 ```json
@@ -74,6 +76,8 @@ keybind から直接使うための操作 API です。
 - `stackfocus, last`
 - `stackswap, next`
 - `stackswap, prev`
+
+`stackswap` は current window を stable order 上の隣接 window と入れ替え、端では wrap し、その結果を以後の stack 操作にも反映します。
 
 設定例:
 
