@@ -1,22 +1,16 @@
-#include <hyprland/src/Compositor.hpp>
-#include <hyprland/src/desktop/history/WindowHistoryTracker.hpp>
 #include <hyprland/src/desktop/state/FocusState.hpp>
 #include <hyprland/src/desktop/view/Window.hpp>
 #include <hyprland/src/event/EventBus.hpp>
-#include <hyprland/src/helpers/Monitor.hpp>
-#include <hyprland/src/layout/LayoutManager.hpp>
-#include <hyprland/src/managers/KeybindManager.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
-#include <hyprland/src/render/Renderer.hpp>
 
+#include "hyprstack/hyprland_executor.hpp"
+#include "hyprstack/hyprland_observer.hpp"
 #include "hyprstack/plugin_state.hpp"
 #include "hyprstack/query_command.hpp"
 #include "hyprstack/stack_dispatcher.hpp"
 
-#include <format>
 #include <stdexcept>
 #include <string>
-#include <vector>
 
 inline HANDLE               G_HANDLE          = nullptr;
 inline SP<SHyprCtlCommand>  G_HYPRCTL_COMMAND = nullptr;
@@ -40,327 +34,54 @@ inline SEventListeners G_LISTENERS;
 
 namespace {
 
-void markStateDirty() {
-    G_STATE_DIRTY = true;
-}
-
-std::string formatAddress(const PHLWINDOW& window) {
-    return std::format("0x{:x}", reinterpret_cast<uintptr_t>(window.get()));
-}
-
-SDispatchResult swapLayoutTargets(const std::string& targetAddress) {
-    const auto focusedWindow = Desktop::focusState()->window();
-
-    if (!focusedWindow)
-        return {
-            .success = false,
-            .error   = "focused window is unavailable",
-        };
-
-    if (focusedWindow->isFullscreen())
-        return {
-            .success = false,
-            .error   = "can't swap fullscreen window",
-        };
-
-    const auto targetWindow = g_pCompositor->getWindowByRegex("address:" + targetAddress);
-
-    if (!targetWindow || targetWindow == focusedWindow)
-        return {
-            .success = false,
-            .error   = "target window is unavailable",
-        };
-
-    if (!g_layoutManager)
-        return {
-            .success = false,
-            .error   = "layout manager is unavailable",
-        };
-
-    g_layoutManager->switchTargets(focusedWindow->layoutTarget(), targetWindow->layoutTarget(), true);
-    focusedWindow->warpCursor();
-    return {};
-}
-
-SDispatchResult swapCompositorOrder(const std::string& targetAddress) {
-    const auto focusedWindow = Desktop::focusState()->window();
-
-    if (!focusedWindow)
-        return {
-            .success = false,
-            .error   = "focused window is unavailable",
-        };
-
-    const auto targetWindow = g_pCompositor->getWindowByRegex("address:" + targetAddress);
-
-    if (!targetWindow || targetWindow == focusedWindow)
-        return {
-            .success = false,
-            .error   = "target window is unavailable",
-        };
-
-    const auto focusedIt = std::ranges::find(g_pCompositor->m_windows, focusedWindow);
-    const auto targetIt  = std::ranges::find(g_pCompositor->m_windows, targetWindow);
-
-    if (focusedIt == g_pCompositor->m_windows.end() || targetIt == g_pCompositor->m_windows.end())
-        return {
-            .success = false,
-            .error   = "window is unavailable in compositor order",
-        };
-
-    // Waybar taskbar order follows Hyprland's foreign toplevel advertisement order.
-    // In practice that order tracks g_pCompositor->m_windows, so stackswap updates it too.
-    std::iter_swap(focusedIt, targetIt);
-
-    if (focusedWindow->m_isMapped)
-        g_pHyprRenderer->damageMonitor(focusedWindow->m_monitor.lock());
-
-    if (targetWindow->m_isMapped)
-        g_pHyprRenderer->damageMonitor(targetWindow->m_monitor.lock());
-
-    return {};
-}
-
-std::optional<int> activeWorkspaceId() {
-    if (const auto focusedWindow = Desktop::focusState()->window(); focusedWindow && valid(focusedWindow->m_workspace))
-        return static_cast<int>(focusedWindow->m_workspace->m_id);
-
-    for (const auto& monitor : g_pCompositor->m_monitors) {
-        if (monitor && valid(monitor->m_activeWorkspace))
-            return static_cast<int>(monitor->m_activeWorkspace->m_id);
-    }
-
-    return std::nullopt;
-}
-
-std::vector<hyprstack::ObservedWindow> observeWindows() {
-    std::vector<hyprstack::ObservedWindow> observed;
-    const auto focusedWindow = Desktop::focusState()->window();
-    const auto history       = Desktop::History::windowTracker()->fullHistory();
-
-    for (const auto& window : g_pCompositor->m_windows) {
-        if (!window || !window->m_isMapped || !valid(window->m_workspace))
-            continue;
-
-        std::optional<size_t> historyIndex;
-        for (size_t i = 0; i < history.size(); ++i) {
-            if (const auto historyWindow = history[i].lock(); historyWindow && historyWindow == window) {
-                historyIndex = i;
-                break;
-            }
-        }
-
-        observed.push_back({
-            .workspaceId   = static_cast<int>(window->m_workspace->m_id),
-            .workspaceName = window->m_workspace->m_name,
-            .address       = formatAddress(window),
-            .className     = window->m_class,
-            .title         = window->m_title,
-            .focused       = focusedWindow && window == focusedWindow,
-            .historyIndex  = historyIndex,
-        });
-    }
-
-    return observed;
-}
-
-std::vector<hyprstack::ObservedWorkspace> observeWorkspaces() {
-    std::vector<hyprstack::ObservedWorkspace> observed;
-
-    for (const auto& workspaceRef : g_pCompositor->getWorkspaces()) {
-        const auto workspace = workspaceRef.lock();
-
-        if (!valid(workspace))
-            continue;
-
-        observed.push_back({
-            .id   = static_cast<int>(workspace->m_id),
-            .name = workspace->m_name,
-        });
-    }
-
-    return observed;
-}
-
-SDispatchResult refreshForeignToplevelForWorkspace(const int workspaceId) {
-    std::vector<PHLWINDOW> windows;
-
-    for (const auto& window : g_pCompositor->m_windows) {
-        if (!window || !window->m_isMapped || !valid(window->m_workspace))
-            continue;
-
-        if (window->m_workspace->m_id != workspaceId)
-            continue;
-
-        windows.push_back(window);
-    }
-
-    // Foreign toplevel clients do not observe compositor-order changes live, so
-    // we re-emit close/open for the workspace windows to force re-advertisement.
-    for (const auto& window : windows)
-        Event::bus()->m_events.window.close.emit(window);
-
-    for (const auto& window : windows)
-        Event::bus()->m_events.window.open.emit(window);
-
-    return {};
-}
-
-hyprstack::QuerySnapshot currentSnapshot() {
-    if (G_STATE_DIRTY) {
-        G_STATE.sync(observeWindows(), observeWorkspaces(), activeWorkspaceId());
-        G_STATE_DIRTY = false;
-    }
-
-    return G_STATE.snapshotForWorkspace();
-}
-
-void ensureStateSynced() {
-    if (!G_STATE_DIRTY)
-        return;
-
-    G_STATE.sync(observeWindows(), observeWorkspaces(), activeWorkspaceId());
-    G_STATE_DIRTY = false;
-}
-
 void registerEventListeners() {
     auto& events = Event::bus()->m_events;
 
-    G_LISTENERS.windowOpen            = events.window.open.listen([](PHLWINDOW) { markStateDirty(); });
-    G_LISTENERS.windowClose           = events.window.close.listen([](PHLWINDOW) { markStateDirty(); });
-    G_LISTENERS.windowDestroy         = events.window.destroy.listen([](PHLWINDOW) { markStateDirty(); });
-    G_LISTENERS.windowActive          = events.window.active.listen([](PHLWINDOW, Desktop::eFocusReason) { markStateDirty(); });
-    G_LISTENERS.windowTitle           = events.window.title.listen([](PHLWINDOW) { markStateDirty(); });
-    G_LISTENERS.windowClass           = events.window.class_.listen([](PHLWINDOW) { markStateDirty(); });
-    G_LISTENERS.windowMoveToWorkspace = events.window.moveToWorkspace.listen([](PHLWINDOW, PHLWORKSPACE) { markStateDirty(); });
-    G_LISTENERS.workspaceActive       = events.workspace.active.listen([](PHLWORKSPACE) { markStateDirty(); });
+    G_LISTENERS.windowOpen            = events.window.open.listen([](PHLWINDOW) { hyprstack::markStateDirty(G_STATE_DIRTY); });
+    G_LISTENERS.windowClose           = events.window.close.listen([](PHLWINDOW) { hyprstack::markStateDirty(G_STATE_DIRTY); });
+    G_LISTENERS.windowDestroy         = events.window.destroy.listen([](PHLWINDOW) { hyprstack::markStateDirty(G_STATE_DIRTY); });
+    G_LISTENERS.windowActive          = events.window.active.listen([](PHLWINDOW, Desktop::eFocusReason) { hyprstack::markStateDirty(G_STATE_DIRTY); });
+    G_LISTENERS.windowTitle           = events.window.title.listen([](PHLWINDOW) { hyprstack::markStateDirty(G_STATE_DIRTY); });
+    G_LISTENERS.windowClass           = events.window.class_.listen([](PHLWINDOW) { hyprstack::markStateDirty(G_STATE_DIRTY); });
+    G_LISTENERS.windowMoveToWorkspace = events.window.moveToWorkspace.listen([](PHLWINDOW, PHLWORKSPACE) { hyprstack::markStateDirty(G_STATE_DIRTY); });
+    G_LISTENERS.workspaceActive       = events.workspace.active.listen([](PHLWORKSPACE) { hyprstack::markStateDirty(G_STATE_DIRTY); });
 }
 
 std::string onHyprCtl([[maybe_unused]] eHyprCtlOutputFormat format, const std::string args) {
-    return hyprstack::handleQueryCommand(currentSnapshot(), hyprstack::splitArgs(args));
+    return hyprstack::handleQueryCommand(hyprstack::currentSnapshot(G_STATE, G_STATE_DIRTY), hyprstack::splitArgs(args));
 }
 
 SDispatchResult onStackFocus(const std::string& args) {
-    const auto resolution = hyprstack::resolveStackFocusTarget(currentSnapshot().stack, args);
+    const auto resolution = hyprstack::resolveStackFocusTarget(hyprstack::currentSnapshot(G_STATE, G_STATE_DIRTY).stack, args);
 
     if (!resolution.address)
-        return {
-            .success = false,
-            .error   = resolution.error,
-        };
+        return hyprstack::makeDispatchError(std::move(resolution.error));
 
-    if (!g_pKeybindManager)
-        return {
-            .success = false,
-            .error   = "hypr keybind manager is unavailable",
-        };
-
-    const auto dispatcher = g_pKeybindManager->m_dispatchers.find("focuswindow");
-
-    if (dispatcher == g_pKeybindManager->m_dispatchers.end())
-        return {
-            .success = false,
-            .error   = "focuswindow dispatcher is unavailable",
-        };
-
-    const auto focusResult = dispatcher->second("address:" + *resolution.address);
-
-    if (!focusResult.success)
-        return focusResult;
-
-    const auto zOrderDispatcher = g_pKeybindManager->m_dispatchers.find("alterzorder");
-
-    if (zOrderDispatcher != g_pKeybindManager->m_dispatchers.end()) {
-        const auto zOrderResult = zOrderDispatcher->second("top,address:" + *resolution.address);
-
-        if (!zOrderResult.success)
-            return zOrderResult;
-    }
-
-    return focusResult;
+    return hyprstack::focusWindowAddress(*resolution.address);
 }
 
 SDispatchResult onStackSwap(const std::string& args) {
-    ensureStateSynced();
+    hyprstack::ensureStateSynced(G_STATE, G_STATE_DIRTY);
 
     const auto action = hyprstack::splitArgs(args);
 
     if (action.size() != 1)
-        return {
-            .success = false,
-            .error   = "usage: stackswap <next|prev>",
-        };
+        return hyprstack::makeDispatchError("usage: stackswap <next|prev>");
 
-    const auto resolution = hyprstack::resolveStackSwapTarget(currentSnapshot().stack, args);
+    const auto swapAction = hyprstack::resolveSwapAction(action[0]);
+
+    if (!swapAction)
+        return hyprstack::makeDispatchError("unknown stackswap subcommand: " + action[0]);
+
+    const auto snapshot   = hyprstack::currentSnapshot(G_STATE, G_STATE_DIRTY);
+    const auto resolution = hyprstack::resolveStackSwapTarget(snapshot.stack, args);
 
     if (!resolution.address)
-        return {
-            .success = false,
-            .error   = resolution.error,
-        };
+        return hyprstack::makeDispatchError(std::move(resolution.error));
 
-    const auto workspaceId = currentSnapshot().workspace ? std::optional<int>{currentSnapshot().workspace->id} : std::nullopt;
-
-    if (action[0] == "next") {
-        const auto swapResult = swapLayoutTargets(*resolution.address);
-
-        if (!swapResult.success)
-            return swapResult;
-
-        const auto compositorResult = swapCompositorOrder(*resolution.address);
-
-        if (!compositorResult.success)
-            return compositorResult;
-
-        if (!G_STATE.swapCurrentWithNext(workspaceId)) {
-            return {
-                .success = false,
-                .error   = "stackswap next requires a focused window and at least two windows",
-            };
-        }
-
-        if (workspaceId) {
-            const auto refreshResult = refreshForeignToplevelForWorkspace(*workspaceId);
-
-            if (!refreshResult.success)
-                return refreshResult;
-        }
-
-        return {};
-    }
-
-    if (action[0] == "prev") {
-        const auto swapResult = swapLayoutTargets(*resolution.address);
-
-        if (!swapResult.success)
-            return swapResult;
-
-        const auto compositorResult = swapCompositorOrder(*resolution.address);
-
-        if (!compositorResult.success)
-            return compositorResult;
-
-        if (!G_STATE.swapCurrentWithPrev(workspaceId)) {
-            return {
-                .success = false,
-                .error   = "stackswap prev requires a focused window and at least two windows",
-            };
-        }
-
-        if (workspaceId) {
-            const auto refreshResult = refreshForeignToplevelForWorkspace(*workspaceId);
-
-            if (!refreshResult.success)
-                return refreshResult;
-        }
-
-        return {};
-    }
-
-    return {
-        .success = false,
-        .error   = "unknown stackswap subcommand: " + action[0],
-    };
+    return hyprstack::executeStackSwap(
+        *resolution.address, hyprstack::snapshotWorkspaceId(snapshot), G_STATE, swapAction->operation, swapAction->failureMessage
+    );
 }
 
 } // namespace
