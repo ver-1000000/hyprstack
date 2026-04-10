@@ -41,11 +41,14 @@ void PluginState::sync(const std::vector<ObservedWindow>& windows, const std::op
     }
 
     for (auto& workspace : m_workspaces) {
+        std::vector<ObservedWindow> workspaceWindows;
         std::vector<std::string> presentAddresses;
 
         for (const auto& window : windows) {
-            if (window.workspaceId == workspace.workspace.id)
+            if (window.workspaceId == workspace.workspace.id) {
                 presentAddresses.push_back(window.address);
+                workspaceWindows.push_back(window);
+            }
         }
 
         std::vector<std::string> missingAddresses;
@@ -57,6 +60,21 @@ void PluginState::sync(const std::vector<ObservedWindow>& windows, const std::op
 
         for (const auto& address : missingAddresses)
             workspace.stack.removeWindow(address);
+
+        std::ranges::sort(workspaceWindows, [](const ObservedWindow& lhs, const ObservedWindow& rhs) {
+            return lhs.historyIndex < rhs.historyIndex;
+        });
+
+        for (const auto& window : workspaceWindows) {
+            if (!window.historyIndex)
+                continue;
+
+            workspace.stack.focusWindow({
+                .address   = window.address,
+                .className = window.className,
+                .title     = window.title,
+            });
+        }
     }
 
     std::erase_if(m_workspaces, [](const WorkspaceState& workspace) { return workspace.stack.windows().empty(); });

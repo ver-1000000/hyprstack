@@ -15,6 +15,7 @@ struct ObservedWindow {
     std::string className;
     std::string title;
     bool        focused = false;
+    std::optional<size_t> historyIndex;
 };
 
 class PluginState {

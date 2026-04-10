@@ -1,4 +1,5 @@
 #include <hyprland/src/Compositor.hpp>
+#include <hyprland/src/desktop/history/WindowHistoryTracker.hpp>
 #include <hyprland/src/desktop/state/FocusState.hpp>
 #include <hyprland/src/helpers/Monitor.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
@@ -36,10 +37,19 @@ std::optional<int> activeWorkspaceId() {
 std::vector<hyprstack::ObservedWindow> observeWindows() {
     std::vector<hyprstack::ObservedWindow> observed;
     const auto focusedWindow = Desktop::focusState()->window();
+    const auto history       = Desktop::History::windowTracker()->fullHistory();
 
     for (const auto& window : g_pCompositor->m_windows) {
         if (!window || !window->m_isMapped || !valid(window->m_workspace))
             continue;
+
+        std::optional<size_t> historyIndex;
+        for (size_t i = 0; i < history.size(); ++i) {
+            if (const auto historyWindow = history[i].lock(); historyWindow && historyWindow == window) {
+                historyIndex = i;
+                break;
+            }
+        }
 
         observed.push_back({
             .workspaceId   = static_cast<int>(window->m_workspace->m_id),
@@ -48,6 +58,7 @@ std::vector<hyprstack::ObservedWindow> observeWindows() {
             .className     = window->m_class,
             .title         = window->m_title,
             .focused       = focusedWindow && window == focusedWindow,
+            .historyIndex  = historyIndex,
         });
     }
 

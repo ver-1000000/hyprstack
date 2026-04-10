@@ -7,9 +7,9 @@ TEST_CASE("PluginState builds active workspace snapshot from observed windows") 
 
     state.sync(
         {
-            {.workspaceId = 1, .workspaceName = "1", .address = "0x1", .className = "ghostty", .title = "one", .focused = false},
-            {.workspaceId = 1, .workspaceName = "1", .address = "0x2", .className = "thunar", .title = "two", .focused = true},
-            {.workspaceId = 2, .workspaceName = "2", .address = "0x3", .className = "firefox", .title = "three", .focused = false},
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x1", .className = "ghostty", .title = "one", .focused = false, .historyIndex = 0},
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x2", .className = "thunar", .title = "two", .focused = true, .historyIndex = 1},
+            {.workspaceId = 2, .workspaceName = "2", .address = "0x3", .className = "firefox", .title = "three", .focused = false, .historyIndex = 2},
         },
         1
     );
@@ -20,6 +20,7 @@ TEST_CASE("PluginState builds active workspace snapshot from observed windows") 
     REQUIRE(snapshot.workspace->id == 1);
     REQUIRE(snapshot.stack.windows().size() == 2);
     REQUIRE(snapshot.stack.current() == std::optional<std::string>{"0x2"});
+    REQUIRE(snapshot.stack.last() == std::optional<std::string>{"0x1"});
 }
 
 TEST_CASE("PluginState preserves stable order across syncs and removes missing windows") {
@@ -27,16 +28,16 @@ TEST_CASE("PluginState preserves stable order across syncs and removes missing w
 
     state.sync(
         {
-            {.workspaceId = 1, .workspaceName = "1", .address = "0x1", .className = "ghostty", .title = "one", .focused = true},
-            {.workspaceId = 1, .workspaceName = "1", .address = "0x2", .className = "thunar", .title = "two", .focused = false},
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x1", .className = "ghostty", .title = "one", .focused = true, .historyIndex = 1},
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x2", .className = "thunar", .title = "two", .focused = false, .historyIndex = 0},
         },
         1
     );
 
     state.sync(
         {
-            {.workspaceId = 1, .workspaceName = "main", .address = "0x2", .className = "thunar", .title = "two updated", .focused = false},
-            {.workspaceId = 1, .workspaceName = "main", .address = "0x3", .className = "firefox", .title = "three", .focused = true},
+            {.workspaceId = 1, .workspaceName = "main", .address = "0x2", .className = "thunar", .title = "two updated", .focused = false, .historyIndex = 1},
+            {.workspaceId = 1, .workspaceName = "main", .address = "0x3", .className = "firefox", .title = "three", .focused = true, .historyIndex = 2},
         },
         1
     );
@@ -50,5 +51,5 @@ TEST_CASE("PluginState preserves stable order across syncs and removes missing w
     REQUIRE(snapshot.stack.windows()[1].address == "0x3");
     REQUIRE(snapshot.stack.windows()[0].title == "two updated");
     REQUIRE(snapshot.stack.current() == std::optional<std::string>{"0x3"});
-    REQUIRE_FALSE(snapshot.stack.last().has_value());
+    REQUIRE(snapshot.stack.last() == std::optional<std::string>{"0x2"});
 }
