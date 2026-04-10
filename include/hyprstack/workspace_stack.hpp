@@ -24,6 +24,8 @@ class WorkspaceStack {
     void addWindow(const StackWindow& window);
     void focusWindow(const StackWindow& window);
     void removeWindow(const std::string& address);
+    bool swapCurrentWithNext();
+    bool swapCurrentWithPrev();
 
     [[nodiscard]] const std::vector<StackWindow>& windows() const;
     [[nodiscard]] std::optional<std::string> current() const;

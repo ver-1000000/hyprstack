@@ -115,3 +115,39 @@ TEST_CASE("focusWindow clears last when refocusing the only remaining window") {
     REQUIRE(stack.current() == std::optional<std::string>{"0x1"});
     REQUIRE_FALSE(stack.last().has_value());
 }
+
+TEST_CASE("swapCurrentWithNext swaps stable order and wraps at the end") {
+    hyprstack::WorkspaceStack stack;
+
+    stack.addWindow(makeWindow("0x1"));
+    stack.addWindow(makeWindow("0x2"));
+    stack.addWindow(makeWindow("0x3"));
+    stack.focusWindow(makeWindow("0x2"));
+
+    REQUIRE(stack.swapCurrentWithNext());
+    REQUIRE(stack.windows()[0].address == "0x1");
+    REQUIRE(stack.windows()[1].address == "0x3");
+    REQUIRE(stack.windows()[2].address == "0x2");
+    REQUIRE(stack.current() == std::optional<std::string>{"0x2"});
+
+    stack.focusWindow(makeWindow("0x2"));
+    REQUIRE(stack.swapCurrentWithNext());
+    REQUIRE(stack.windows()[0].address == "0x2");
+    REQUIRE(stack.windows()[1].address == "0x3");
+    REQUIRE(stack.windows()[2].address == "0x1");
+}
+
+TEST_CASE("swapCurrentWithPrev swaps stable order and wraps at the beginning") {
+    hyprstack::WorkspaceStack stack;
+
+    stack.addWindow(makeWindow("0x1"));
+    stack.addWindow(makeWindow("0x2"));
+    stack.addWindow(makeWindow("0x3"));
+    stack.focusWindow(makeWindow("0x1"));
+
+    REQUIRE(stack.swapCurrentWithPrev());
+    REQUIRE(stack.windows()[0].address == "0x3");
+    REQUIRE(stack.windows()[1].address == "0x2");
+    REQUIRE(stack.windows()[2].address == "0x1");
+    REQUIRE(stack.current() == std::optional<std::string>{"0x1"});
+}

@@ -19,6 +19,8 @@ v0 では、Query API と最小の focus dispatcher を提供する
 - `stackfocus, next`
 - `stackfocus, prev`
 - `stackfocus, last`
+- `stackswap, next`
+- `stackswap, prev`
 
 ## command surface
 
@@ -28,6 +30,8 @@ v0 では、Query API と最小の focus dispatcher を提供する
 - `stackfocus, next`
 - `stackfocus, prev`
 - `stackfocus, last`
+- `stackswap, next`
+- `stackswap, prev`
 
 ## stack list
 
@@ -176,3 +180,14 @@ active workspace 自体が解決できない場合は `workspace` は `null` に
   - 先頭では末尾へ wrap する
 - `stackfocus, last`
   - stable stack order とは独立した last-focused window へ移動する
+
+## stackswap
+
+`stackswap` は stable stack model に基づいて current window の位置を入れ替える
+
+- `stackswap, next`
+  - current window を stable stack order 上の次の window と入れ替える
+  - 末尾では先頭と入れ替える
+- `stackswap, prev`
+  - current window を stable stack order 上の前の window と入れ替える
+  - 先頭では末尾と入れ替える

@@ -125,6 +125,34 @@ QuerySnapshot PluginState::snapshotForWorkspace(const std::optional<int> workspa
     };
 }
 
+bool PluginState::swapCurrentWithNext(const std::optional<int> workspaceId) {
+    const auto targetWorkspaceId = workspaceId.or_else([this]() { return m_activeWorkspaceId; });
+
+    if (!targetWorkspaceId)
+        return false;
+
+    auto* workspace = findWorkspace(*targetWorkspaceId);
+
+    if (!workspace)
+        return false;
+
+    return workspace->stack.swapCurrentWithNext();
+}
+
+bool PluginState::swapCurrentWithPrev(const std::optional<int> workspaceId) {
+    const auto targetWorkspaceId = workspaceId.or_else([this]() { return m_activeWorkspaceId; });
+
+    if (!targetWorkspaceId)
+        return false;
+
+    auto* workspace = findWorkspace(*targetWorkspaceId);
+
+    if (!workspace)
+        return false;
+
+    return workspace->stack.swapCurrentWithPrev();
+}
+
 PluginState::WorkspaceState* PluginState::findWorkspace(const int workspaceId) {
     const auto iter = std::ranges::find(m_workspaces, workspaceId, [](const WorkspaceState& workspace) { return workspace.workspace.id; });
 

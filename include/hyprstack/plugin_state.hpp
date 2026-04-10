@@ -27,6 +27,8 @@ class PluginState {
   public:
     void sync(const std::vector<ObservedWindow>& windows, const std::vector<ObservedWorkspace>& workspaces, std::optional<int> activeWorkspaceId);
     [[nodiscard]] QuerySnapshot snapshotForWorkspace(std::optional<int> workspaceId = std::nullopt) const;
+    [[nodiscard]] bool swapCurrentWithNext(std::optional<int> workspaceId = std::nullopt);
+    [[nodiscard]] bool swapCurrentWithPrev(std::optional<int> workspaceId = std::nullopt);
 
   private:
     struct WorkspaceState {

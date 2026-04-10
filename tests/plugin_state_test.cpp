@@ -271,3 +271,38 @@ TEST_CASE("PluginState updates current and last when focused window moves to ano
     REQUIRE(secondWorkspace.stack.current() == std::optional<std::string>{"0x2"});
     REQUIRE_FALSE(secondWorkspace.stack.last().has_value());
 }
+
+TEST_CASE("PluginState preserves swapped stable order across syncs") {
+    hyprstack::PluginState state;
+
+    state.sync(
+        {
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x1", .className = "ghostty", .title = "one", .focused = true, .historyIndex = 1},
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x2", .className = "thunar", .title = "two", .focused = false, .historyIndex = 0},
+        },
+        {
+            {.id = 1, .name = "1"},
+        },
+        1
+    );
+
+    REQUIRE(state.swapCurrentWithNext());
+
+    state.sync(
+        {
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x1", .className = "ghostty", .title = "one", .focused = true, .historyIndex = 1},
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x2", .className = "thunar", .title = "two", .focused = false, .historyIndex = 0},
+        },
+        {
+            {.id = 1, .name = "1"},
+        },
+        1
+    );
+
+    const auto snapshot = state.snapshotForWorkspace(1);
+
+    REQUIRE(snapshot.stack.windows().size() == 2);
+    REQUIRE(snapshot.stack.windows()[0].address == "0x2");
+    REQUIRE(snapshot.stack.windows()[1].address == "0x1");
+    REQUIRE(snapshot.stack.current() == std::optional<std::string>{"0x1"});
+}

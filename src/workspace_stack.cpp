@@ -47,6 +47,34 @@ void WorkspaceStack::removeWindow(const std::string& address) {
         m_last.reset();
 }
 
+bool WorkspaceStack::swapCurrentWithNext() {
+    if (!m_current || m_windows.size() < 2)
+        return false;
+
+    const auto currentIndex = indexOf(*m_current);
+
+    if (currentIndex >= m_windows.size())
+        return false;
+
+    const auto nextIndex = (currentIndex + 1) % m_windows.size();
+    std::swap(m_windows[currentIndex], m_windows[nextIndex]);
+    return true;
+}
+
+bool WorkspaceStack::swapCurrentWithPrev() {
+    if (!m_current || m_windows.size() < 2)
+        return false;
+
+    const auto currentIndex = indexOf(*m_current);
+
+    if (currentIndex >= m_windows.size())
+        return false;
+
+    const auto prevIndex = (currentIndex + m_windows.size() - 1) % m_windows.size();
+    std::swap(m_windows[currentIndex], m_windows[prevIndex]);
+    return true;
+}
+
 const std::vector<StackWindow>& WorkspaceStack::windows() const {
     return m_windows;
 }

@@ -72,6 +72,21 @@
 - `stackfocus next` と `stackfocus prev` は stable order 上を巡回する
 - 先頭と末尾では wrap する
 
+## stackswap
+
+1. 同じ workspace に A, B, C を置く
+2. B を focus する
+3. `hyprctl dispatch stackswap next` を実行する
+4. `hyprctl plugin hyprstack stack list` を実行する
+5. `hyprctl dispatch stackswap prev` を実行する
+6. `hyprctl plugin hyprstack stack list` を実行する
+
+期待:
+
+- `stackswap next` で current の address は変わらず、stable order 上の位置だけが次と入れ替わる
+- `stackswap prev` で stable order 上の位置だけが前と入れ替わる
+- 先頭と末尾では wrap する
+
 ## close
 
 1. 同じ workspace に A, B を置く

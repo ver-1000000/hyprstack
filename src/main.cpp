@@ -20,6 +20,7 @@ inline SP<SHyprCtlCommand>  G_HYPRCTL_COMMAND = nullptr;
 inline hyprstack::PluginState G_STATE;
 inline bool                 G_STATE_DIRTY     = true;
 inline bool                 G_STACKFOCUS_REGISTERED = false;
+inline bool                 G_STACKSWAP_REGISTERED  = false;
 
 struct SEventListeners {
     CHyprSignalListener windowOpen;
@@ -157,6 +158,43 @@ SDispatchResult onStackFocus(const std::string& args) {
     return dispatcher->second("address:" + *resolution.address);
 }
 
+SDispatchResult onStackSwap(const std::string& args) {
+    const auto action = hyprstack::splitArgs(args);
+
+    if (action.size() != 1)
+        return {
+            .success = false,
+            .error   = "usage: stackswap <next|prev>",
+        };
+
+    if (action[0] == "next") {
+        if (!G_STATE.swapCurrentWithNext()) {
+            return {
+                .success = false,
+                .error   = "stackswap next requires a focused window and at least two windows",
+            };
+        }
+
+        return {};
+    }
+
+    if (action[0] == "prev") {
+        if (!G_STATE.swapCurrentWithPrev()) {
+            return {
+                .success = false,
+                .error   = "stackswap prev requires a focused window and at least two windows",
+            };
+        }
+
+        return {};
+    }
+
+    return {
+        .success = false,
+        .error   = "unknown stackswap subcommand: " + action[0],
+    };
+}
+
 } // namespace
 
 APICALL EXPORT std::string PLUGIN_API_VERSION() {
@@ -193,6 +231,11 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     if (!G_STACKFOCUS_REGISTERED)
         throw std::runtime_error("[hyprstack] Failed to register stackfocus dispatcher");
 
+    G_STACKSWAP_REGISTERED = HyprlandAPI::addDispatcherV2(G_HANDLE, "stackswap", onStackSwap);
+
+    if (!G_STACKSWAP_REGISTERED)
+        throw std::runtime_error("[hyprstack] Failed to register stackswap dispatcher");
+
     registerEventListeners();
 
     HyprlandAPI::addNotification(
@@ -203,7 +246,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
         .name        = "hyprstack",
         .description = "Workspace-local stable window stack semantics for Hyprland",
         .author      = "AKAI",
-        .version     = "0.3.0",
+        .version     = "0.4.0",
     };
 }
 
@@ -213,6 +256,11 @@ APICALL EXPORT void PLUGIN_EXIT() {
     if (G_HANDLE && G_STACKFOCUS_REGISTERED) {
         HyprlandAPI::removeDispatcher(G_HANDLE, "stackfocus");
         G_STACKFOCUS_REGISTERED = false;
+    }
+
+    if (G_HANDLE && G_STACKSWAP_REGISTERED) {
+        HyprlandAPI::removeDispatcher(G_HANDLE, "stackswap");
+        G_STACKSWAP_REGISTERED = false;
     }
 
     if (G_HANDLE && G_HYPRCTL_COMMAND) {
