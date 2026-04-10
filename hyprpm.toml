@@ -1,0 +1,9 @@
+[repository]
+name = "hyprstack"
+authors = ["AKAI"]
+
+[hyprstack]
+description = "Workspace-local stable window stack semantics for Hyprland"
+authors = ["AKAI"]
+output = "hyprstack.so"
+build = ["make all"]
