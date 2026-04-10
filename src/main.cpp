@@ -7,6 +7,7 @@
 #include <hyprland/src/layout/LayoutManager.hpp>
 #include <hyprland/src/managers/KeybindManager.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
+#include <hyprland/src/render/Renderer.hpp>
 
 #include "hyprstack/plugin_state.hpp"
 #include "hyprstack/query_command.hpp"
@@ -81,6 +82,45 @@ SDispatchResult swapLayoutTargets(const std::string& targetAddress) {
     return {};
 }
 
+SDispatchResult swapCompositorOrder(const std::string& targetAddress) {
+    const auto focusedWindow = Desktop::focusState()->window();
+
+    if (!focusedWindow)
+        return {
+            .success = false,
+            .error   = "focused window is unavailable",
+        };
+
+    const auto targetWindow = g_pCompositor->getWindowByRegex("address:" + targetAddress);
+
+    if (!targetWindow || targetWindow == focusedWindow)
+        return {
+            .success = false,
+            .error   = "target window is unavailable",
+        };
+
+    const auto focusedIt = std::ranges::find(g_pCompositor->m_windows, focusedWindow);
+    const auto targetIt  = std::ranges::find(g_pCompositor->m_windows, targetWindow);
+
+    if (focusedIt == g_pCompositor->m_windows.end() || targetIt == g_pCompositor->m_windows.end())
+        return {
+            .success = false,
+            .error   = "window is unavailable in compositor order",
+        };
+
+    // Waybar taskbar order follows Hyprland's foreign toplevel advertisement order.
+    // In practice that order tracks g_pCompositor->m_windows, so stackswap updates it too.
+    std::iter_swap(focusedIt, targetIt);
+
+    if (focusedWindow->m_isMapped)
+        g_pHyprRenderer->damageMonitor(focusedWindow->m_monitor.lock());
+
+    if (targetWindow->m_isMapped)
+        g_pHyprRenderer->damageMonitor(targetWindow->m_monitor.lock());
+
+    return {};
+}
+
 std::optional<int> activeWorkspaceId() {
     if (const auto focusedWindow = Desktop::focusState()->window(); focusedWindow && valid(focusedWindow->m_workspace))
         return static_cast<int>(focusedWindow->m_workspace->m_id);
@@ -140,6 +180,30 @@ std::vector<hyprstack::ObservedWorkspace> observeWorkspaces() {
     }
 
     return observed;
+}
+
+SDispatchResult refreshForeignToplevelForWorkspace(const int workspaceId) {
+    std::vector<PHLWINDOW> windows;
+
+    for (const auto& window : g_pCompositor->m_windows) {
+        if (!window || !window->m_isMapped || !valid(window->m_workspace))
+            continue;
+
+        if (window->m_workspace->m_id != workspaceId)
+            continue;
+
+        windows.push_back(window);
+    }
+
+    // Foreign toplevel clients do not observe compositor-order changes live, so
+    // we re-emit close/open for the workspace windows to force re-advertisement.
+    for (const auto& window : windows)
+        Event::bus()->m_events.window.close.emit(window);
+
+    for (const auto& window : windows)
+        Event::bus()->m_events.window.open.emit(window);
+
+    return {};
 }
 
 hyprstack::QuerySnapshot currentSnapshot() {
@@ -243,11 +307,23 @@ SDispatchResult onStackSwap(const std::string& args) {
         if (!swapResult.success)
             return swapResult;
 
+        const auto compositorResult = swapCompositorOrder(*resolution.address);
+
+        if (!compositorResult.success)
+            return compositorResult;
+
         if (!G_STATE.swapCurrentWithNext(workspaceId)) {
             return {
                 .success = false,
                 .error   = "stackswap next requires a focused window and at least two windows",
             };
+        }
+
+        if (workspaceId) {
+            const auto refreshResult = refreshForeignToplevelForWorkspace(*workspaceId);
+
+            if (!refreshResult.success)
+                return refreshResult;
         }
 
         return {};
@@ -259,11 +335,23 @@ SDispatchResult onStackSwap(const std::string& args) {
         if (!swapResult.success)
             return swapResult;
 
+        const auto compositorResult = swapCompositorOrder(*resolution.address);
+
+        if (!compositorResult.success)
+            return compositorResult;
+
         if (!G_STATE.swapCurrentWithPrev(workspaceId)) {
             return {
                 .success = false,
                 .error   = "stackswap prev requires a focused window and at least two windows",
             };
+        }
+
+        if (workspaceId) {
+            const auto refreshResult = refreshForeignToplevelForWorkspace(*workspaceId);
+
+            if (!refreshResult.success)
+                return refreshResult;
         }
 
         return {};
