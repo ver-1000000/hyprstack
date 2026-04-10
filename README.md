@@ -118,12 +118,12 @@ exec-once = hyprpm reload
 ```sh
 $ git clone https://github.com/ver-1000000/hyprstack.git
 $ cd hyprstack
-$ make all                                 # build the plugin
-$ hyprctl plugin load "$PWD/hyprstack.so"  # load the built plugin
+$ make all                                       # build the plugin
+$ hyprctl plugin load "$PWD/build/hyprstack.so"  # load the built plugin
 ```
 
 Then add the following line to your Hyprland config and reload:
 
 ```conf
-plugin = /absolute/path/to/hyprstack.so
+plugin = /absolute/path/to/build/hyprstack.so
 ```

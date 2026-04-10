@@ -1,4 +1,4 @@
-#include "hyprstack/query_command.hpp"
+#include "hyprstack/interface/json_renderer.hpp"
 
 #include <format>
 #include <sstream>
@@ -45,17 +45,6 @@ std::string escapeJson(const std::string_view input) {
     }
 
     return escaped;
-}
-
-std::vector<std::string> splitArgs(const std::string_view input) {
-    std::istringstream      stream(std::string{input});
-    std::vector<std::string> parts;
-    std::string              part;
-
-    while (stream >> part)
-        parts.push_back(part);
-
-    return parts;
 }
 
 std::string renderEmptyStackList() {
@@ -143,37 +132,6 @@ notes:
     responses use the JSON shapes described in the README
     direct hyprctl invocation is not wired yet in the local environment
 )help";
-}
-
-std::string handleQueryCommand(const QuerySnapshot& snapshot, const std::vector<std::string>& args) {
-    if (args.empty())
-        return renderHelp();
-
-    size_t offset = 0;
-
-    if (args[0] == "hyprstack")
-        offset = 1;
-
-    if (args.size() < offset + 2)
-        return renderHelp();
-
-    if (args[offset] != "stack")
-        return renderHelp();
-
-    if (args[offset + 1] == "list")
-        return renderStackList(snapshot.workspace, snapshot.stack);
-
-    if (args[offset + 1] == "current")
-        return renderCurrent(snapshot.workspace, snapshot.stack);
-
-    if (args[offset + 1] == "around")
-        return renderAround(snapshot.workspace, snapshot.stack);
-
-    return "unknown hyprstack subcommand: " + escapeJson(args[offset + 1]);
-}
-
-std::string handleQueryCommand(const std::vector<std::string>& args) {
-    return handleQueryCommand(QuerySnapshot{}, args);
 }
 
 } // namespace hyprstack

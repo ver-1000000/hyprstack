@@ -1,27 +1,12 @@
 #pragma once
 
-#include "hyprstack/query_command.hpp"
+#include "hyprstack/application/observed_state.hpp"
+#include "hyprstack/application/stack_store.hpp"
+#include "hyprstack/application/state_sync.hpp"
 
 #include <optional>
-#include <string>
-#include <vector>
 
 namespace hyprstack {
-
-struct ObservedWindow {
-    int         workspaceId;
-    std::string workspaceName;
-    std::string address;
-    std::string className;
-    std::string title;
-    bool        focused = false;
-    std::optional<size_t> historyIndex;
-};
-
-struct ObservedWorkspace {
-    int         id;
-    std::string name;
-};
 
 class PluginState {
   public:
@@ -31,16 +16,8 @@ class PluginState {
     [[nodiscard]] bool swapCurrentWithPrev(std::optional<int> workspaceId = std::nullopt);
 
   private:
-    struct WorkspaceState {
-        WorkspaceRef    workspace;
-        WorkspaceStack  stack;
-    };
-
-    std::vector<WorkspaceState> m_workspaces;
-    std::optional<int>          m_activeWorkspaceId;
-
-    WorkspaceState*       findWorkspace(int workspaceId);
-    const WorkspaceState* findWorkspace(int workspaceId) const;
+    StackStore       m_store;
+    StateSyncService m_syncService;
 };
 
 } // namespace hyprstack

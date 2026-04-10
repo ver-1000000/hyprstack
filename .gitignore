@@ -1,4 +1,2 @@
 .codex
-hyprstack.so
-hyprstack-*.so
-tests-runner
+build

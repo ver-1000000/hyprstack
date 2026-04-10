@@ -120,12 +120,12 @@ exec-once = hyprpm reload
 ```sh
 $ git clone https://github.com/ver-1000000/hyprstack.git
 $ cd hyprstack
-$ make all                                 # plugin を build
-$ hyprctl plugin load "$PWD/hyprstack.so"  # build した plugin を読み込む
+$ make all                                       # plugin を build
+$ hyprctl plugin load "$PWD/build/hyprstack.so"  # build した plugin を読み込む
 ```
 
 次に、Hyprland config に次の一行を追加して reload してください。
 
 ```conf
-plugin = /absolute/path/to/hyprstack.so
+plugin = /absolute/path/to/build/hyprstack.so
 ```

@@ -1,4 +1,4 @@
-#include "hyprstack/stack_dispatcher.hpp"
+#include "hyprstack/application/dispatch_service.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -102,6 +102,36 @@ StackDispatchResolution resolveStackSwapTarget(const WorkspaceStack& stack, cons
         return resolvePrev(stack);
 
     return errorResult("unknown stackswap subcommand: " + action);
+}
+
+std::optional<StackSwapDirection> parseStackSwapDirection(const std::string_view arg) {
+    const auto action = trim(arg);
+
+    if (action == "next")
+        return StackSwapDirection::Next;
+
+    if (action == "prev")
+        return StackSwapDirection::Prev;
+
+    return std::nullopt;
+}
+
+bool applyStackSwap(StackStore& store, const StackSwapDirection direction, const std::optional<int> workspaceId) {
+    switch (direction) {
+        case StackSwapDirection::Next: return store.swapCurrentWithNext(workspaceId);
+        case StackSwapDirection::Prev: return store.swapCurrentWithPrev(workspaceId);
+    }
+
+    return false;
+}
+
+std::string stackSwapFailureMessage(const StackSwapDirection direction) {
+    switch (direction) {
+        case StackSwapDirection::Next: return "stackswap next requires a focused window and at least two windows";
+        case StackSwapDirection::Prev: return "stackswap prev requires a focused window and at least two windows";
+    }
+
+    return "stackswap requires a focused window and at least two windows";
 }
 
 } // namespace hyprstack

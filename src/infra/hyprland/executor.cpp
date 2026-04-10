@@ -1,4 +1,4 @@
-#include "hyprstack/hyprland_executor.hpp"
+#include "hyprstack/infra/hyprland/executor.hpp"
 
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/state/FocusState.hpp>
@@ -114,25 +114,7 @@ SDispatchResult makeDispatchError(std::string error) {
     };
 }
 
-std::optional<StackSwapAction> resolveSwapAction(const std::string_view action) {
-    if (action == "next") {
-        return StackSwapAction{
-            .operation      = &PluginState::swapCurrentWithNext,
-            .failureMessage = "stackswap next requires a focused window and at least two windows",
-        };
-    }
-
-    if (action == "prev") {
-        return StackSwapAction{
-            .operation      = &PluginState::swapCurrentWithPrev,
-            .failureMessage = "stackswap prev requires a focused window and at least two windows",
-        };
-    }
-
-    return std::nullopt;
-}
-
-SDispatchResult focusWindowAddress(const std::string& address) {
+SDispatchResult HyprlandExecutor::focusWindowAddress(const std::string& address) const {
     if (!g_pKeybindManager)
         return makeDispatchError("hypr keybind manager is unavailable");
 
@@ -159,10 +141,9 @@ SDispatchResult focusWindowAddress(const std::string& address) {
     return focusResult;
 }
 
-SDispatchResult executeStackSwap(
-    const std::string& address, const std::optional<int> workspaceId, PluginState& state, const PluginStateSwapOperation operation,
-    const std::string_view failureMessage
-) {
+SDispatchResult HyprlandExecutor::executeStackSwap(
+    const std::string& address, const std::optional<int> workspaceId, StackStore& store, const StackSwapDirection direction
+) const {
     const auto swapResult = swapLayoutTargets(address);
 
     if (!swapResult.success)
@@ -173,8 +154,8 @@ SDispatchResult executeStackSwap(
     if (!compositorResult.success)
         return compositorResult;
 
-    if (!(state.*operation)(workspaceId))
-        return makeDispatchError(std::string(failureMessage));
+    if (!applyStackSwap(store, direction, workspaceId))
+        return makeDispatchError(stackSwapFailureMessage(direction));
 
     if (!workspaceId)
         return {};

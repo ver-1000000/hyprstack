@@ -1,4 +1,4 @@
-#include "hyprstack/hyprland_observer.hpp"
+#include "hyprstack/infra/hyprland/observer.hpp"
 
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/history/WindowHistoryTracker.hpp>
@@ -14,12 +14,6 @@ namespace {
 
 std::string formatAddress(const PHLWINDOW& window) {
     return std::format("0x{:x}", reinterpret_cast<uintptr_t>(window.get()));
-}
-
-} // namespace
-
-void markStateDirty(bool& dirty) {
-    dirty = true;
 }
 
 std::optional<int> activeWorkspaceId() {
@@ -83,24 +77,14 @@ std::vector<ObservedWorkspace> observeWorkspaces() {
     return observed;
 }
 
-void ensureStateSynced(PluginState& state, bool& dirty) {
-    if (!dirty)
-        return;
+} // namespace
 
-    state.sync(observeWindows(), observeWorkspaces(), activeWorkspaceId());
-    dirty = false;
-}
-
-QuerySnapshot currentSnapshot(PluginState& state, bool& dirty) {
-    ensureStateSynced(state, dirty);
-    return state.snapshotForWorkspace();
-}
-
-std::optional<int> snapshotWorkspaceId(const QuerySnapshot& snapshot) {
-    if (!snapshot.workspace)
-        return std::nullopt;
-
-    return snapshot.workspace->id;
+ObservedSnapshot HyprlandObserver::snapshot() const {
+    return {
+        .windows           = observeWindows(),
+        .workspaces        = observeWorkspaces(),
+        .activeWorkspaceId = activeWorkspaceId(),
+    };
 }
 
 } // namespace hyprstack

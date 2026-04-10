@@ -1,12 +1,13 @@
-#include "hyprstack/workspace_stack.hpp"
+#include "hyprstack/domain/workspace_stack.hpp"
 
 #include <algorithm>
+#include <cstddef>
 
 namespace hyprstack {
 
 namespace {
 
-std::optional<std::string> atIndex(const std::vector<StackWindow>& windows, const ssize_t index) {
+std::optional<std::string> atIndex(const std::vector<StackWindow>& windows, const std::ptrdiff_t index) {
     if (index < 0 || static_cast<size_t>(index) >= windows.size())
         return std::nullopt;
 
@@ -98,7 +99,7 @@ StackAround WorkspaceStack::around() const {
     if (!m_current)
         return result;
 
-    const auto index = static_cast<ssize_t>(indexOf(*m_current));
+    const auto index = static_cast<std::ptrdiff_t>(indexOf(*m_current));
     result.prev      = atIndex(m_windows, index - 1);
     result.next      = atIndex(m_windows, index + 1);
 
