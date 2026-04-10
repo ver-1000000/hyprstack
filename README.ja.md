@@ -90,35 +90,38 @@ bind = SHIFT $mainMod, K, stackswap, prev
 
 ### 前提パッケージ
 
-Arch Linux では、plugin の build と load に必要なパッケージを先に入れます。
+plugin のビルド/読み込みに必要なパッケージを先に入れます。
+
+Arch Linux では次のようになります。
 
 ```sh
-sudo pacman -S --needed git base-devel pkgconf hyprland
+$ sudo pacman -S --needed git base-devel cmake cpio pkgconf hyprland
 ```
-
-`hyprctl` と `hyprpm` が使える状態にしておいてください。
 
 ### `hyprpm` で導入する
 
 ```sh
-$ # repository を clone
-$ git clone https://github.com/ver-1000000/hyprstack.git
-$ cd hyprstack
-$ # ローカル repository を `hyprpm` に追加して plugin を有効化
-$ hyprpm add .
-$ hyprpm enable hyprstack
-$ # 必要なら plugin を reload
-$ hyprpm reload
+$ hyprpm add https://github.com/ver-1000000/hyprstack.git
+$ hyprpm enable hyprstack  # hyprstack を有効化
 ```
 
-### source から build して手動で読み込む
+`hyprpm` 管理の plugin を起動時に読み込む設定がまだ無い場合は、Hyprland config に次の一行を追加してください。
+
+```conf
+exec-once = hyprpm reload
+```
+
+### 手動で導入する (ソースからビルド)
 
 ```sh
-$ # repository を clone
 $ git clone https://github.com/ver-1000000/hyprstack.git
 $ cd hyprstack
-$ # plugin を build
-$ make all
-$ # build した plugin を読み込む
-$ hyprctl plugin load "$PWD/hyprstack.so"
+$ make all                                 # plugin を build
+$ hyprctl plugin load "$PWD/hyprstack.so"  # build した plugin を読み込む
+```
+
+次に、Hyprland config に次の一行を追加して reload してください。
+
+```conf
+plugin = /absolute/path/to/hyprstack.so
 ```

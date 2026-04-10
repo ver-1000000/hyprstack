@@ -93,38 +93,33 @@ bind = SHIFT $mainMod, K, stackswap, prev
 On Arch Linux, install the packages needed for building and loading the plugin:
 
 ```sh
-sudo pacman -S --needed git base-devel pkgconf hyprland
+$ sudo pacman -S --needed git base-devel cmake cpio pkgconf hyprland
 ```
-
-Make sure `hyprctl` and `hyprpm` are available in your environment.
 
 ### Install with `hyprpm`
 
 ```sh
-$ # clone the repository
-$ git clone https://github.com/ver-1000000/hyprstack.git
-$ cd hyprstack
-$ # add the local repository to hyprpm and enable the plugin
-$ hyprpm add .
-$ hyprpm enable hyprstack
-$ # reload plugins if needed
-$ hyprpm reload
+$ hyprpm add https://github.com/ver-1000000/hyprstack.git
+$ hyprpm enable hyprstack  # enable hyprstack
 ```
 
-### Build from source and load manually
+If your Hyprland config does not already load `hyprpm`-managed plugins at startup, add the following line:
+
+```conf
+exec-once = hyprpm reload
+```
+
+### Install manually (build from source)
 
 ```sh
-$ # clone the repository
 $ git clone https://github.com/ver-1000000/hyprstack.git
 $ cd hyprstack
-$ # build the plugin
-$ make all
-$ # load the built plugin
-$ hyprctl plugin load "$PWD/hyprstack.so"
+$ make all                                 # build the plugin
+$ hyprctl plugin load "$PWD/hyprstack.so"  # load the built plugin
 ```
 
-## Intended Use Cases
+Then add the following line to your Hyprland config and reload:
 
-- users who want stable window order per workspace
-- users who want stack-based keybinds
-- users who do not want to depend on taskbar ordering
+```conf
+plugin = /absolute/path/to/hyprstack.so
+```
