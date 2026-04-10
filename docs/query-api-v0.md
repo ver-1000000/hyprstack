@@ -4,9 +4,8 @@
 
 `hyprstack` は、Hyprland の既存の順番概念(focus history、z-order、layout order、taskbar order 風の見え方)をそのまま流用せず、workspace ごとの stable な window stack を plugin 側で提供する
 
-v0 では、まず Query API を先に固定する
+v0 では、まず Query API を先に固定しつつ、最小の focus dispatcher も含める
 
-- dispatcher は後回し
 - stack の source of truth は plugin が持つ
 - taskbar 順には依存しない
 - `focusHistoryID` は `last` の補助候補ではあるが、stable order そのものの根拠にはしない
@@ -17,6 +16,9 @@ v0 では、まず Query API を先に固定する
 - `stack list`
 - `stack current`
 - `stack around`
+- `stackfocus, next`
+- `stackfocus, prev`
+- `stackfocus, last`
 
 ## command surface
 
@@ -181,7 +183,9 @@ active workspace 自体が解決できない場合は `workspace` は `null` に
 - `stack list` は active workspace の windows を返す
 - `stack current` は active workspace の current と last を返す
 - `stack around` は active workspace の prev / next / last を返す
+- `stackfocus, next/prev/last` は stable stack を元に `focuswindow` へ委譲する
 - stable order と current / last は plugin 内 state で管理する
 - 実機確認は `scripts/query.sh` と `scripts/smoke.sh` を使う
 - plugin の hot reload は現環境で Hyprland crash を起こしたため、現時点では無効
 - 将来的には `hyprpm reload` ベースの開発フローに寄せたいが、現時点では未整備
+- `stackswap` はまだ未実装

@@ -3,10 +3,12 @@
 #include <hyprland/src/desktop/state/FocusState.hpp>
 #include <hyprland/src/event/EventBus.hpp>
 #include <hyprland/src/helpers/Monitor.hpp>
+#include <hyprland/src/managers/KeybindManager.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
 
 #include "hyprstack/plugin_state.hpp"
 #include "hyprstack/query_command.hpp"
+#include "hyprstack/stack_dispatcher.hpp"
 
 #include <format>
 #include <stdexcept>
@@ -17,6 +19,7 @@ inline HANDLE               G_HANDLE          = nullptr;
 inline SP<SHyprCtlCommand>  G_HYPRCTL_COMMAND = nullptr;
 inline hyprstack::PluginState G_STATE;
 inline bool                 G_STATE_DIRTY     = true;
+inline bool                 G_STACKFOCUS_REGISTERED = false;
 
 struct SEventListeners {
     CHyprSignalListener windowOpen;
@@ -128,6 +131,32 @@ std::string onHyprCtl([[maybe_unused]] eHyprCtlOutputFormat format, const std::s
     return hyprstack::handleQueryCommand(currentSnapshot(), hyprstack::splitArgs(args));
 }
 
+SDispatchResult onStackFocus(const std::string& args) {
+    const auto resolution = hyprstack::resolveStackFocusTarget(currentSnapshot().stack, args);
+
+    if (!resolution.address)
+        return {
+            .success = false,
+            .error   = resolution.error,
+        };
+
+    if (!g_pKeybindManager)
+        return {
+            .success = false,
+            .error   = "hypr keybind manager is unavailable",
+        };
+
+    const auto dispatcher = g_pKeybindManager->m_dispatchers.find("focuswindow");
+
+    if (dispatcher == g_pKeybindManager->m_dispatchers.end())
+        return {
+            .success = false,
+            .error   = "focuswindow dispatcher is unavailable",
+        };
+
+    return dispatcher->second("address:" + *resolution.address);
+}
+
 } // namespace
 
 APICALL EXPORT std::string PLUGIN_API_VERSION() {
@@ -159,6 +188,11 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     if (!G_HYPRCTL_COMMAND)
         throw std::runtime_error("[hyprstack] Failed to register hyprctl command");
 
+    G_STACKFOCUS_REGISTERED = HyprlandAPI::addDispatcherV2(G_HANDLE, "stackfocus", onStackFocus);
+
+    if (!G_STACKFOCUS_REGISTERED)
+        throw std::runtime_error("[hyprstack] Failed to register stackfocus dispatcher");
+
     registerEventListeners();
 
     HyprlandAPI::addNotification(
@@ -169,12 +203,17 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
         .name        = "hyprstack",
         .description = "Workspace-local stable window stack semantics for Hyprland",
         .author      = "AKAI",
-        .version     = "0.2.0",
+        .version     = "0.3.0",
     };
 }
 
 APICALL EXPORT void PLUGIN_EXIT() {
     G_LISTENERS = {};
+
+    if (G_HANDLE && G_STACKFOCUS_REGISTERED) {
+        HyprlandAPI::removeDispatcher(G_HANDLE, "stackfocus");
+        G_STACKFOCUS_REGISTERED = false;
+    }
 
     if (G_HANDLE && G_HYPRCTL_COMMAND) {
         HyprlandAPI::unregisterHyprCtlCommand(G_HANDLE, G_HYPRCTL_COMMAND);

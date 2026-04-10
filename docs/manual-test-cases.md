@@ -63,6 +63,20 @@
 - `last` は C
 - `prev` と `next` は stable order 上の隣接を返す
 
+## stackfocus
+
+1. 同じ workspace に A, B を置く
+2. A -> B の順で focus する
+3. `scripts/hyprctl-live.sh dispatch stackfocus last` を実行する
+4. `scripts/hyprctl-live.sh dispatch stackfocus next` を実行する
+5. `scripts/hyprctl-live.sh dispatch stackfocus prev` を実行する
+
+期待:
+
+- `stackfocus last` で A に戻る
+- `stackfocus next` と `stackfocus prev` は stable order 上を巡回する
+- 先頭と末尾では wrap する
+
 ## close
 
 1. 同じ workspace に A, B を置く
