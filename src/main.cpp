@@ -1,17 +1,66 @@
+#include <hyprland/src/Compositor.hpp>
+#include <hyprland/src/desktop/state/FocusState.hpp>
+#include <hyprland/src/helpers/Monitor.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
 
+#include "hyprstack/plugin_state.hpp"
 #include "hyprstack/query_command.hpp"
 
+#include <format>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 inline HANDLE               G_HANDLE          = nullptr;
 inline SP<SHyprCtlCommand>  G_HYPRCTL_COMMAND = nullptr;
+inline hyprstack::PluginState G_STATE;
 
 namespace {
 
+std::string formatAddress(const PHLWINDOW& window) {
+    return std::format("0x{:x}", reinterpret_cast<uintptr_t>(window.get()));
+}
+
+std::optional<int> activeWorkspaceId() {
+    if (const auto focusedWindow = Desktop::focusState()->window(); focusedWindow && valid(focusedWindow->m_workspace))
+        return static_cast<int>(focusedWindow->m_workspace->m_id);
+
+    for (const auto& monitor : g_pCompositor->m_monitors) {
+        if (monitor && valid(monitor->m_activeWorkspace))
+            return static_cast<int>(monitor->m_activeWorkspace->m_id);
+    }
+
+    return std::nullopt;
+}
+
+std::vector<hyprstack::ObservedWindow> observeWindows() {
+    std::vector<hyprstack::ObservedWindow> observed;
+    const auto focusedWindow = Desktop::focusState()->window();
+
+    for (const auto& window : g_pCompositor->m_windows) {
+        if (!window || !window->m_isMapped || !valid(window->m_workspace))
+            continue;
+
+        observed.push_back({
+            .workspaceId   = static_cast<int>(window->m_workspace->m_id),
+            .workspaceName = window->m_workspace->m_name,
+            .address       = formatAddress(window),
+            .className     = window->m_class,
+            .title         = window->m_title,
+            .focused       = focusedWindow && window == focusedWindow,
+        });
+    }
+
+    return observed;
+}
+
+hyprstack::QuerySnapshot currentSnapshot() {
+    G_STATE.sync(observeWindows(), activeWorkspaceId());
+    return G_STATE.snapshotForWorkspace();
+}
+
 std::string onHyprCtl([[maybe_unused]] eHyprCtlOutputFormat format, const std::string args) {
-    return hyprstack::handleQueryCommand(hyprstack::splitArgs(args));
+    return hyprstack::handleQueryCommand(currentSnapshot(), hyprstack::splitArgs(args));
 }
 
 } // namespace
@@ -46,14 +95,14 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
         throw std::runtime_error("[hyprstack] Failed to register hyprctl command");
 
     HyprlandAPI::addNotification(
-        G_HANDLE, "[hyprstack] Loaded Query API v0 skeleton", CHyprColor{0.2, 0.8, 1.0, 1.0}, 3000
+        G_HANDLE, "[hyprstack] Loaded Query API v0", CHyprColor{0.2, 0.8, 1.0, 1.0}, 3000
     );
 
     return {
         .name        = "hyprstack",
         .description = "Workspace-local stable window stack semantics for Hyprland",
         .author      = "AKAI",
-        .version     = "0.1.1",
+        .version     = "0.2.0",
     };
 }
 

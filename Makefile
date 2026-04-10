@@ -1,7 +1,7 @@
 PLUGIN := hyprstack.so
-PLUGIN_SRC := src/main.cpp src/query_command.cpp src/workspace_stack.cpp
+PLUGIN_SRC := src/main.cpp src/plugin_state.cpp src/query_command.cpp src/workspace_stack.cpp
 TEST_BIN := tests-runner
-TEST_SRC := tests/query_command_test.cpp tests/workspace_stack_test.cpp src/query_command.cpp src/workspace_stack.cpp vendor/catch2/catch_amalgamated.cpp
+TEST_SRC := tests/plugin_state_test.cpp tests/query_command_test.cpp tests/workspace_stack_test.cpp src/plugin_state.cpp src/query_command.cpp src/workspace_stack.cpp vendor/catch2/catch_amalgamated.cpp
 
 CXX ?= c++
 COMMON_CXXFLAGS += -std=c++23 -Wall -Wextra -Wpedantic
