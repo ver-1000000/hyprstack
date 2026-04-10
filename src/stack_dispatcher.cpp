@@ -92,4 +92,16 @@ StackDispatchResolution resolveStackFocusTarget(const WorkspaceStack& stack, con
     return errorResult("unknown stackfocus subcommand: " + action);
 }
 
+StackDispatchResolution resolveStackSwapTarget(const WorkspaceStack& stack, const std::string_view arg) {
+    const auto action = trim(arg);
+
+    if (action == "next")
+        return resolveNext(stack);
+
+    if (action == "prev")
+        return resolvePrev(stack);
+
+    return errorResult("unknown stackswap subcommand: " + action);
+}
+
 } // namespace hyprstack

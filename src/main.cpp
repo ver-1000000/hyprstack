@@ -1,8 +1,10 @@
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/history/WindowHistoryTracker.hpp>
 #include <hyprland/src/desktop/state/FocusState.hpp>
+#include <hyprland/src/desktop/view/Window.hpp>
 #include <hyprland/src/event/EventBus.hpp>
 #include <hyprland/src/helpers/Monitor.hpp>
+#include <hyprland/src/layout/LayoutManager.hpp>
 #include <hyprland/src/managers/KeybindManager.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
 
@@ -43,6 +45,40 @@ void markStateDirty() {
 
 std::string formatAddress(const PHLWINDOW& window) {
     return std::format("0x{:x}", reinterpret_cast<uintptr_t>(window.get()));
+}
+
+SDispatchResult swapLayoutTargets(const std::string& targetAddress) {
+    const auto focusedWindow = Desktop::focusState()->window();
+
+    if (!focusedWindow)
+        return {
+            .success = false,
+            .error   = "focused window is unavailable",
+        };
+
+    if (focusedWindow->isFullscreen())
+        return {
+            .success = false,
+            .error   = "can't swap fullscreen window",
+        };
+
+    const auto targetWindow = g_pCompositor->getWindowByRegex("address:" + targetAddress);
+
+    if (!targetWindow || targetWindow == focusedWindow)
+        return {
+            .success = false,
+            .error   = "target window is unavailable",
+        };
+
+    if (!g_layoutManager)
+        return {
+            .success = false,
+            .error   = "layout manager is unavailable",
+        };
+
+    g_layoutManager->switchTargets(focusedWindow->layoutTarget(), targetWindow->layoutTarget(), true);
+    focusedWindow->warpCursor();
+    return {};
 }
 
 std::optional<int> activeWorkspaceId() {
@@ -115,6 +151,14 @@ hyprstack::QuerySnapshot currentSnapshot() {
     return G_STATE.snapshotForWorkspace();
 }
 
+void ensureStateSynced() {
+    if (!G_STATE_DIRTY)
+        return;
+
+    G_STATE.sync(observeWindows(), observeWorkspaces(), activeWorkspaceId());
+    G_STATE_DIRTY = false;
+}
+
 void registerEventListeners() {
     auto& events = Event::bus()->m_events;
 
@@ -173,6 +217,8 @@ SDispatchResult onStackFocus(const std::string& args) {
 }
 
 SDispatchResult onStackSwap(const std::string& args) {
+    ensureStateSynced();
+
     const auto action = hyprstack::splitArgs(args);
 
     if (action.size() != 1)
@@ -181,8 +227,23 @@ SDispatchResult onStackSwap(const std::string& args) {
             .error   = "usage: stackswap <next|prev>",
         };
 
+    const auto resolution = hyprstack::resolveStackSwapTarget(currentSnapshot().stack, args);
+
+    if (!resolution.address)
+        return {
+            .success = false,
+            .error   = resolution.error,
+        };
+
+    const auto workspaceId = currentSnapshot().workspace ? std::optional<int>{currentSnapshot().workspace->id} : std::nullopt;
+
     if (action[0] == "next") {
-        if (!G_STATE.swapCurrentWithNext()) {
+        const auto swapResult = swapLayoutTargets(*resolution.address);
+
+        if (!swapResult.success)
+            return swapResult;
+
+        if (!G_STATE.swapCurrentWithNext(workspaceId)) {
             return {
                 .success = false,
                 .error   = "stackswap next requires a focused window and at least two windows",
@@ -193,7 +254,12 @@ SDispatchResult onStackSwap(const std::string& args) {
     }
 
     if (action[0] == "prev") {
-        if (!G_STATE.swapCurrentWithPrev()) {
+        const auto swapResult = swapLayoutTargets(*resolution.address);
+
+        if (!swapResult.success)
+            return swapResult;
+
+        if (!G_STATE.swapCurrentWithPrev(workspaceId)) {
             return {
                 .success = false,
                 .error   = "stackswap prev requires a focused window and at least two windows",
@@ -251,10 +317,6 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
         throw std::runtime_error("[hyprstack] Failed to register stackswap dispatcher");
 
     registerEventListeners();
-
-    HyprlandAPI::addNotification(
-        G_HANDLE, "[hyprstack] Loaded Query API v0", CHyprColor{0.2, 0.8, 1.0, 1.0}, 3000
-    );
 
     return {
         .name        = "hyprstack",

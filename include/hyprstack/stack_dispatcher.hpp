@@ -16,5 +16,6 @@ struct StackDispatchResolution {
 [[nodiscard]] StackDispatchResolution successResult(std::string address);
 [[nodiscard]] StackDispatchResolution errorResult(std::string error);
 [[nodiscard]] StackDispatchResolution resolveStackFocusTarget(const WorkspaceStack& stack, std::string_view arg);
+[[nodiscard]] StackDispatchResolution resolveStackSwapTarget(const WorkspaceStack& stack, std::string_view arg);
 
 } // namespace hyprstack
