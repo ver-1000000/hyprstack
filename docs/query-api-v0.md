@@ -158,11 +158,14 @@ skeleton 実装では plugin 側で `hyprstack` command handler を登録する
 
 `prev` と `last` は同じとは限らない
 
-## skeleton 実装方針
+## 現在の実装段階
 
-最初の skeleton では、上の JSON shape を先に固定する
+現在は Query API の command surface と JSON shape を固定したうえで、active workspace に対する実データ返却まで入っている
 
-- `stack list` は空 stack JSON を返す
-- `stack current` は空 current JSON を返す
-- `stack around` は空 around JSON を返す
-- 実際の window tracking は次段で追加する
+- `stack list` は active workspace の windows を返す
+- `stack current` は active workspace の current と last を返す
+- `stack around` は active workspace の prev / next / last を返す
+- stable order と current / last は plugin 内 state で管理する
+- 実機確認は `scripts/query.sh` と `scripts/smoke.sh` を使う
+- plugin の hot reload は現環境で Hyprland crash を起こしたため、現時点では無効
+- 将来的には `hyprpm reload` ベースの開発フローに寄せたいが、現時点では未整備
