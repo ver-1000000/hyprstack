@@ -1,4 +1,5 @@
 PLUGIN := hyprstack.so
+PLUGIN_DEV := hyprstack-dev.so
 PLUGIN_SRC := src/main.cpp src/plugin_state.cpp src/query_command.cpp src/workspace_stack.cpp
 TEST_BIN := tests-runner
 TEST_SRC := tests/plugin_state_test.cpp tests/query_command_test.cpp tests/workspace_stack_test.cpp src/plugin_state.cpp src/query_command.cpp src/workspace_stack.cpp vendor/catch2/catch_amalgamated.cpp
@@ -14,6 +15,9 @@ PLUGIN_LDLIBS += $(shell pkg-config --libs hyprland)
 
 all: $(PLUGIN)
 
+dev-plugin: $(PLUGIN)
+	cp -f $(PLUGIN) $(PLUGIN_DEV)
+
 $(PLUGIN): $(PLUGIN_SRC)
 	$(CXX) $(PLUGIN_CXXFLAGS) $(PLUGIN_LDFLAGS) -o $@ $^ $(PLUGIN_LDLIBS)
 
@@ -24,6 +28,6 @@ test: $(TEST_BIN)
 	./$(TEST_BIN)
 
 clean:
-	rm -f $(PLUGIN) $(TEST_BIN)
+	rm -f $(PLUGIN) $(PLUGIN_DEV) $(TEST_BIN)
 
-.PHONY: all test clean
+.PHONY: all dev-plugin test clean

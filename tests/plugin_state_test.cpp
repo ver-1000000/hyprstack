@@ -53,3 +53,53 @@ TEST_CASE("PluginState preserves stable order across syncs and removes missing w
     REQUIRE(snapshot.stack.current() == std::optional<std::string>{"0x3"});
     REQUIRE(snapshot.stack.last() == std::optional<std::string>{"0x2"});
 }
+
+TEST_CASE("PluginState moves a window between workspaces") {
+    hyprstack::PluginState state;
+
+    state.sync(
+        {
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x1", .className = "ghostty", .title = "one", .focused = true, .historyIndex = 1},
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x2", .className = "thunar", .title = "two", .focused = false, .historyIndex = 0},
+        },
+        1
+    );
+
+    state.sync(
+        {
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x1", .className = "ghostty", .title = "one", .focused = true, .historyIndex = 1},
+            {.workspaceId = 2, .workspaceName = "2", .address = "0x2", .className = "thunar", .title = "two", .focused = false, .historyIndex = 0},
+        },
+        1
+    );
+
+    const auto firstWorkspace = state.snapshotForWorkspace(1);
+    const auto secondWorkspace = state.snapshotForWorkspace(2);
+
+    REQUIRE(firstWorkspace.workspace.has_value());
+    REQUIRE(firstWorkspace.stack.windows().size() == 1);
+    REQUIRE(firstWorkspace.stack.windows()[0].address == "0x1");
+
+    REQUIRE(secondWorkspace.workspace.has_value());
+    REQUIRE(secondWorkspace.stack.windows().size() == 1);
+    REQUIRE(secondWorkspace.stack.windows()[0].address == "0x2");
+}
+
+TEST_CASE("PluginState falls back to explicit workspace when active workspace is absent") {
+    hyprstack::PluginState state;
+
+    state.sync(
+        {
+            {.workspaceId = 7, .workspaceName = "scratch", .address = "0xaa", .className = "ghostty", .title = "shell", .focused = false, .historyIndex = std::nullopt},
+        },
+        std::nullopt
+    );
+
+    const auto activeSnapshot = state.snapshotForWorkspace();
+    const auto explicitSnapshot = state.snapshotForWorkspace(7);
+
+    REQUIRE_FALSE(activeSnapshot.workspace.has_value());
+    REQUIRE(explicitSnapshot.workspace.has_value());
+    REQUIRE(explicitSnapshot.workspace->id == 7);
+    REQUIRE(explicitSnapshot.stack.windows().size() == 1);
+}
