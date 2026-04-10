@@ -8,9 +8,9 @@
 ## 基本確認
 
 1. plugin が load 済みであることを確認する
-2. `hyprctl plugin hyprstack stack list` を実行する
-3. `hyprctl plugin hyprstack stack current` を実行する
-4. `hyprctl plugin hyprstack stack around` を実行する
+2. `hyprctl hyprstack stack list` を実行する
+3. `hyprctl hyprstack stack current` を実行する
+4. `hyprctl hyprstack stack around` を実行する
 
 期待:
 
@@ -21,8 +21,8 @@
 ## empty workspace
 
 1. active workspace を空の workspace に切り替える
-2. `hyprctl plugin hyprstack stack list` を実行する
-3. `hyprctl plugin hyprstack stack current` を実行する
+2. `hyprctl hyprstack stack list` を実行する
+3. `hyprctl hyprstack stack current` を実行する
 
 期待:
 
@@ -35,8 +35,8 @@
 1. 同じ workspace に window を 2 つ開く
 2. A を focus する
 3. B を focus する
-4. `hyprctl plugin hyprstack stack current` を実行する
-5. `hyprctl plugin hyprstack stack around` を実行する
+4. `hyprctl hyprstack stack current` を実行する
+5. `hyprctl hyprstack stack around` を実行する
 
 期待:
 
@@ -48,8 +48,8 @@
 
 1. 同じ workspace に A, B, C を並べる
 2. A -> B -> C -> B の順で focus する
-3. `hyprctl plugin hyprstack stack list` を実行する
-4. `hyprctl plugin hyprstack stack around` を実行する
+3. `hyprctl hyprstack stack list` を実行する
+4. `hyprctl hyprstack stack around` を実行する
 
 期待:
 
@@ -77,9 +77,9 @@
 1. 同じ workspace に A, B, C を置く
 2. B を focus する
 3. `hyprctl dispatch stackswap next` を実行する
-4. `hyprctl plugin hyprstack stack list` を実行する
+4. `hyprctl hyprstack stack list` を実行する
 5. `hyprctl dispatch stackswap prev` を実行する
-6. `hyprctl plugin hyprstack stack list` を実行する
+6. `hyprctl hyprstack stack list` を実行する
 
 期待:
 
@@ -92,7 +92,7 @@
 1. 同じ workspace に A, B を置く
 2. A -> B の順で focus する
 3. B を閉じる
-4. `hyprctl plugin hyprstack stack list` を実行する
+4. `hyprctl hyprstack stack list` を実行する
 
 期待:
 
@@ -104,8 +104,8 @@
 
 1. workspace 1 に A, B を置く
 2. B を workspace 2 へ移す
-3. workspace 1 で `hyprctl plugin hyprstack stack list` を実行する
-4. workspace 2 に移動して `hyprctl plugin hyprstack stack list` を実行する
+3. workspace 1 で `hyprctl hyprstack stack list` を実行する
+4. workspace 2 に移動して `hyprctl hyprstack stack list` を実行する
 
 期待:
 

@@ -40,9 +40,9 @@ This makes it possible to treat window order and window actions through the same
 
 The query side is intended for scripts, debugging, and integrations.
 
-- `hyprctl plugin hyprstack stack list`
-- `hyprctl plugin hyprstack stack current`
-- `hyprctl plugin hyprstack stack around`
+- `hyprctl hyprstack stack list`
+- `hyprctl hyprstack stack current`
+- `hyprctl hyprstack stack around`
 
 Example output:
 

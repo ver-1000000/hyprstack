@@ -24,9 +24,9 @@ v0 では、Query API と最小の focus dispatcher を提供する
 
 ## command surface
 
-- `hyprctl plugin hyprstack stack list`
-- `hyprctl plugin hyprstack stack current`
-- `hyprctl plugin hyprstack stack around`
+- `hyprctl hyprstack stack list`
+- `hyprctl hyprstack stack current`
+- `hyprctl hyprstack stack around`
 - `stackfocus, next`
 - `stackfocus, prev`
 - `stackfocus, last`
