@@ -1,5 +1,9 @@
 # hyprstack
 
+<p align="center">
+  <img src="./assets/logo.svg" alt="hyprstack logo" width="160" height="160">
+</p>
+
 `hyprstack` is a Hyprland plugin that adds a stable per-workspace window stack.
 
 The goal of `hyprstack` is to make window order a first-class concept.
@@ -84,10 +88,40 @@ bind = SHIFT $mainMod, K, stackswap, prev
 
 ## Installation
 
-Install it using your preferred Hyprland plugin workflow.
+### Prerequisites
 
-- use `hyprpm`
-- build from source and load it manually
+On Arch Linux, install the packages needed for building and loading the plugin:
+
+```sh
+sudo pacman -S --needed git base-devel pkgconf hyprland
+```
+
+Make sure `hyprctl` and `hyprpm` are available in your environment.
+
+### Install with `hyprpm`
+
+```sh
+$ # clone the repository
+$ git clone https://github.com/ver-1000000/hyprstack.git
+$ cd hyprstack
+$ # add the local repository to hyprpm and enable the plugin
+$ hyprpm add .
+$ hyprpm enable hyprstack
+$ # reload plugins if needed
+$ hyprpm reload
+```
+
+### Build from source and load manually
+
+```sh
+$ # clone the repository
+$ git clone https://github.com/ver-1000000/hyprstack.git
+$ cd hyprstack
+$ # build the plugin
+$ make all
+$ # load the built plugin
+$ hyprctl plugin load "$PWD/hyprstack.so"
+```
 
 ## Intended Use Cases
 

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" version="1.1" viewBox="0 330 512 512" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <style>.st0 {
+        fill: url(#a);
+      }
+
+      .st1 {
+        fill: url(#b);
+      }
+
+      .st2 {
+        fill: url(#c);
+      }
+
+      .st3 {
+        fill: url(#d);
+      }
+
+      .st4 {
+        fill: url(#e);
+      }
+
+      .st5 {
+        fill: url(#f);
+      }
+
+      .st6 {
+        fill: url(#g);
+      }
+
+      .st7 {
+        fill: url(#h);
+      }
+
+      .st8 {
+        fill: url(#i);
+      }</style>
+    <style class="darkreader darkreader--sync" media="screen"/>
+    <linearGradient id="i" x1="562" x2="562" y1="594" y2="491" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00a8f4" style="--darkreader-inline-stopcolor:var(--darkreader-background-00a8f4, #0086c3)" data-darkreader-inline-stopcolor="" offset="0"/>
+      <stop stop-color="#00e5d0" style="--darkreader-inline-stopcolor:var(--darkreader-background-00e5d0, #00b7a6)" data-darkreader-inline-stopcolor="" offset="1"/>
+    </linearGradient>
+    <linearGradient id="c" x1="631" x2="631" y1="567" y2="492" xlink:href="#i"/>
+    <linearGradient id="a" x1="480" x2="480" y1="596" y2="494" xlink:href="#i"/>
+    <linearGradient id="b" x1="393" x2="393" y1="567" y2="470" xlink:href="#i"/>
+    <linearGradient id="f" x1="805" x2="805" y1="567" y2="492" xlink:href="#i"/>
+    <linearGradient id="g" x1="884" x2="884" y1="570" y2="463" xlink:href="#i"/>
+    <linearGradient id="d" x1="672" x2="672" y1="567" y2="466" xlink:href="#i"/>
+    <linearGradient id="e" x1="724" x2="724" y1="570" y2="492" xlink:href="#i"/>
+    <linearGradient id="h" x1="202" x2="202" y1="660" y2="347" gradientTransform="translate(9e-7)" xlink:href="#i"/>
+    <linearGradient id="l" x1="121" x2="390" y1="729" y2="457" gradientTransform="translate(-3e-6)" gradientUnits="userSpaceOnUse">
+      <stop style="stop-color:#a28eff" offset="0"/>
+      <stop style="stop-color:#00e1f6" offset="1"/>
+    </linearGradient>
+    <linearGradient id="k" x1="121" x2="390" y1="729" y2="457" gradientTransform="translate(-3e-6)" gradientUnits="userSpaceOnUse">
+      <stop style="stop-color:#00a8f4" offset="0"/>
+      <stop style="stop-color:#00e5d0" offset="1"/>
+    </linearGradient>
+    <linearGradient id="j" x1="121" x2="390" y1="729" y2="457" gradientUnits="userSpaceOnUse">
+      <stop style="stop-color:#ed65ff" offset="0"/>
+      <stop style="stop-color:#9bd3ff" offset="1"/>
+    </linearGradient>
+  </defs>
+  <path d="m392 363c-103-2-207 52-277 124-40 41-69 88-78 137-9 49 6 102 49 140 44 39 98 51 150 43 52-8 101-36 142-76 78-76 124-200 85-328l-42 48c17 96-21 185-79 242-34 33-75 55-113 61-39 6-75-2-107-30-30-27-38-56-32-91 6-35 29-75 64-110 56-57 140-102 220-107l45-52c-8-1-17-2-25-2z" style="fill:url(#k);stop-color:#000000"/>
+  <path d="m343 369c-86-2-173 44-231 103-33 34-57 73-65 115-7 41 5 85 40 116 36 32 82 43 125 36 43-7 84-30 118-63 65-63 104-167 70-273l-35 40c14 80-17 154-66 202-28 28-62 46-94 51s-62-2-89-25c-25-23-32-47-26-76 5-29 24-62 53-92 46-48 117-85 183-89l37-43c-7-0.8-14-1-21-1z" style="fill:url(#l);stop-color:#000000"/>
+  <path d="m303 368c-70-2-140 35-187 84-27 28-46 60-52 93-6 33 4 69 33 94 29 26 66 35 101 29 35-6 68-24 96-51 52-51 84-135 57-222l-29 33c12 65-14 125-53 164-23 23-50 37-77 41-26 4-50-1-72-21-21-18-26-38-21-61 4-24 20-50 43-74 38-39 95-69 148-72l30-35c-6-0.6-11-1-17-1z" style="fill:url(#j);stop-color:#000000"/>
+</svg>

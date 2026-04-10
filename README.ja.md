@@ -1,5 +1,9 @@
 # hyprstack
 
+<p align="center">
+  <img src="./assets/logo.svg" alt="hyprstack logo" width="160" height="160">
+</p>
+
 `hyprstack` は、Hyprland に workspace ごとの stable な window stack を追加するプラグインです。
 
 `hyprstack` の目的は、window の順番を一貫した概念として扱えるようにすることです。
@@ -84,7 +88,37 @@ bind = SHIFT $mainMod, K, stackswap, prev
 
 ## 導入
 
-Hyprland plugin の一般的な方法で導入してください。
+### 前提パッケージ
 
-- `hyprpm` を使う
-- source から build して手動で読み込む
+Arch Linux では、plugin の build と load に必要なパッケージを先に入れます。
+
+```sh
+sudo pacman -S --needed git base-devel pkgconf hyprland
+```
+
+`hyprctl` と `hyprpm` が使える状態にしておいてください。
+
+### `hyprpm` で導入する
+
+```sh
+$ # repository を clone
+$ git clone https://github.com/ver-1000000/hyprstack.git
+$ cd hyprstack
+$ # ローカル repository を `hyprpm` に追加して plugin を有効化
+$ hyprpm add .
+$ hyprpm enable hyprstack
+$ # 必要なら plugin を reload
+$ hyprpm reload
+```
+
+### source から build して手動で読み込む
+
+```sh
+$ # repository を clone
+$ git clone https://github.com/ver-1000000/hyprstack.git
+$ cd hyprstack
+$ # plugin を build
+$ make all
+$ # build した plugin を読み込む
+$ hyprctl plugin load "$PWD/hyprstack.so"
+```
