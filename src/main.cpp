@@ -155,7 +155,21 @@ SDispatchResult onStackFocus(const std::string& args) {
             .error   = "focuswindow dispatcher is unavailable",
         };
 
-    return dispatcher->second("address:" + *resolution.address);
+    const auto focusResult = dispatcher->second("address:" + *resolution.address);
+
+    if (!focusResult.success)
+        return focusResult;
+
+    const auto zOrderDispatcher = g_pKeybindManager->m_dispatchers.find("alterzorder");
+
+    if (zOrderDispatcher != g_pKeybindManager->m_dispatchers.end()) {
+        const auto zOrderResult = zOrderDispatcher->second("top,address:" + *resolution.address);
+
+        if (!zOrderResult.success)
+            return zOrderResult;
+    }
+
+    return focusResult;
 }
 
 SDispatchResult onStackSwap(const std::string& args) {
