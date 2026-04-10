@@ -1,6 +1,7 @@
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/history/WindowHistoryTracker.hpp>
 #include <hyprland/src/desktop/state/FocusState.hpp>
+#include <hyprland/src/event/EventBus.hpp>
 #include <hyprland/src/helpers/Monitor.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
 
@@ -15,8 +16,26 @@
 inline HANDLE               G_HANDLE          = nullptr;
 inline SP<SHyprCtlCommand>  G_HYPRCTL_COMMAND = nullptr;
 inline hyprstack::PluginState G_STATE;
+inline bool                 G_STATE_DIRTY     = true;
+
+struct SEventListeners {
+    CHyprSignalListener windowOpen;
+    CHyprSignalListener windowClose;
+    CHyprSignalListener windowDestroy;
+    CHyprSignalListener windowActive;
+    CHyprSignalListener windowTitle;
+    CHyprSignalListener windowClass;
+    CHyprSignalListener windowMoveToWorkspace;
+    CHyprSignalListener workspaceActive;
+};
+
+inline SEventListeners G_LISTENERS;
 
 namespace {
+
+void markStateDirty() {
+    G_STATE_DIRTY = true;
+}
 
 std::string formatAddress(const PHLWINDOW& window) {
     return std::format("0x{:x}", reinterpret_cast<uintptr_t>(window.get()));
@@ -66,8 +85,25 @@ std::vector<hyprstack::ObservedWindow> observeWindows() {
 }
 
 hyprstack::QuerySnapshot currentSnapshot() {
-    G_STATE.sync(observeWindows(), activeWorkspaceId());
+    if (G_STATE_DIRTY) {
+        G_STATE.sync(observeWindows(), activeWorkspaceId());
+        G_STATE_DIRTY = false;
+    }
+
     return G_STATE.snapshotForWorkspace();
+}
+
+void registerEventListeners() {
+    auto& events = Event::bus()->m_events;
+
+    G_LISTENERS.windowOpen            = events.window.open.listen([](PHLWINDOW) { markStateDirty(); });
+    G_LISTENERS.windowClose           = events.window.close.listen([](PHLWINDOW) { markStateDirty(); });
+    G_LISTENERS.windowDestroy         = events.window.destroy.listen([](PHLWINDOW) { markStateDirty(); });
+    G_LISTENERS.windowActive          = events.window.active.listen([](PHLWINDOW, Desktop::eFocusReason) { markStateDirty(); });
+    G_LISTENERS.windowTitle           = events.window.title.listen([](PHLWINDOW) { markStateDirty(); });
+    G_LISTENERS.windowClass           = events.window.class_.listen([](PHLWINDOW) { markStateDirty(); });
+    G_LISTENERS.windowMoveToWorkspace = events.window.moveToWorkspace.listen([](PHLWINDOW, PHLWORKSPACE) { markStateDirty(); });
+    G_LISTENERS.workspaceActive       = events.workspace.active.listen([](PHLWORKSPACE) { markStateDirty(); });
 }
 
 std::string onHyprCtl([[maybe_unused]] eHyprCtlOutputFormat format, const std::string args) {
@@ -105,6 +141,8 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     if (!G_HYPRCTL_COMMAND)
         throw std::runtime_error("[hyprstack] Failed to register hyprctl command");
 
+    registerEventListeners();
+
     HyprlandAPI::addNotification(
         G_HANDLE, "[hyprstack] Loaded Query API v0", CHyprColor{0.2, 0.8, 1.0, 1.0}, 3000
     );
@@ -118,10 +156,14 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 }
 
 APICALL EXPORT void PLUGIN_EXIT() {
+    G_LISTENERS = {};
+
     if (G_HANDLE && G_HYPRCTL_COMMAND) {
         HyprlandAPI::unregisterHyprCtlCommand(G_HANDLE, G_HYPRCTL_COMMAND);
         G_HYPRCTL_COMMAND.reset();
     }
 
+    G_STATE       = {};
+    G_STATE_DIRTY = true;
     G_HANDLE = nullptr;
 }

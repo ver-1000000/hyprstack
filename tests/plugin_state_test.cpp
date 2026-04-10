@@ -103,3 +103,54 @@ TEST_CASE("PluginState falls back to explicit workspace when active workspace is
     REQUIRE(explicitSnapshot.workspace->id == 7);
     REQUIRE(explicitSnapshot.stack.windows().size() == 1);
 }
+
+TEST_CASE("PluginState updates workspace name without losing stack order") {
+    hyprstack::PluginState state;
+
+    state.sync(
+        {
+            {.workspaceId = 5, .workspaceName = "old", .address = "0x1", .className = "ghostty", .title = "one", .focused = true, .historyIndex = 0},
+            {.workspaceId = 5, .workspaceName = "old", .address = "0x2", .className = "thunar", .title = "two", .focused = false, .historyIndex = std::nullopt},
+        },
+        5
+    );
+
+    state.sync(
+        {
+            {.workspaceId = 5, .workspaceName = "new", .address = "0x1", .className = "ghostty", .title = "one", .focused = true, .historyIndex = 0},
+            {.workspaceId = 5, .workspaceName = "new", .address = "0x2", .className = "thunar", .title = "two", .focused = false, .historyIndex = std::nullopt},
+        },
+        5
+    );
+
+    const auto snapshot = state.snapshotForWorkspace(5);
+
+    REQUIRE(snapshot.workspace.has_value());
+    REQUIRE(snapshot.workspace->name == "new");
+    REQUIRE(snapshot.stack.windows().size() == 2);
+    REQUIRE(snapshot.stack.windows()[0].address == "0x1");
+    REQUIRE(snapshot.stack.windows()[1].address == "0x2");
+}
+
+TEST_CASE("PluginState updates window metadata in place") {
+    hyprstack::PluginState state;
+
+    state.sync(
+        {
+            {.workspaceId = 3, .workspaceName = "3", .address = "0xaa", .className = "ghostty", .title = "old title", .focused = true, .historyIndex = 0},
+        },
+        3
+    );
+
+    state.sync(
+        {
+            {.workspaceId = 3, .workspaceName = "3", .address = "0xaa", .className = "ghostty", .title = "new title", .focused = true, .historyIndex = 0},
+        },
+        3
+    );
+
+    const auto snapshot = state.snapshotForWorkspace(3);
+
+    REQUIRE(snapshot.stack.windows().size() == 1);
+    REQUIRE(snapshot.stack.windows()[0].title == "new title");
+}
