@@ -102,3 +102,16 @@ TEST_CASE("removeWindow removes current and last when they point to removed wind
     REQUIRE_FALSE(stack.current().has_value());
     REQUIRE_FALSE(stack.last().has_value());
 }
+
+TEST_CASE("focusWindow clears last when refocusing the only remaining window") {
+    hyprstack::WorkspaceStack stack;
+
+    stack.focusWindow(makeWindow("0x1"));
+    stack.focusWindow(makeWindow("0x2"));
+    stack.removeWindow("0x2");
+    stack.focusWindow(makeWindow("0x1"));
+
+    REQUIRE(stack.windows().size() == 1);
+    REQUIRE(stack.current() == std::optional<std::string>{"0x1"});
+    REQUIRE_FALSE(stack.last().has_value());
+}

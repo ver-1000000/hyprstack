@@ -32,6 +32,9 @@ void WorkspaceStack::focusWindow(const StackWindow& window) {
         m_last = m_current;
 
     m_current = window.address;
+
+    if (m_last && *m_last == *m_current)
+        m_last.reset();
 }
 
 void WorkspaceStack::removeWindow(const std::string& address) {

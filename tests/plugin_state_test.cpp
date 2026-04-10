@@ -201,3 +201,34 @@ TEST_CASE("PluginState keeps empty active workspace metadata") {
     REQUIRE_FALSE(snapshot.stack.current().has_value());
     REQUIRE_FALSE(snapshot.stack.last().has_value());
 }
+
+TEST_CASE("PluginState clears last when focused window closes and previous window regains focus") {
+    hyprstack::PluginState state;
+
+    state.sync(
+        {
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x1", .className = "ghostty", .title = "one", .focused = false, .historyIndex = 0},
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x2", .className = "thunar", .title = "two", .focused = true, .historyIndex = 1},
+        },
+        {
+            {.id = 1, .name = "1"},
+        },
+        1
+    );
+
+    state.sync(
+        {
+            {.workspaceId = 1, .workspaceName = "1", .address = "0x1", .className = "ghostty", .title = "one", .focused = true, .historyIndex = 0},
+        },
+        {
+            {.id = 1, .name = "1"},
+        },
+        1
+    );
+
+    const auto snapshot = state.snapshotForWorkspace(1);
+
+    REQUIRE(snapshot.stack.windows().size() == 1);
+    REQUIRE(snapshot.stack.current() == std::optional<std::string>{"0x1"});
+    REQUIRE_FALSE(snapshot.stack.last().has_value());
+}
