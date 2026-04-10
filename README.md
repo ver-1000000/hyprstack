@@ -4,7 +4,11 @@
   <img src="./assets/logo.svg" alt="hyprstack logo" width="160" height="160">
 </p>
 
-`hyprstack` is a Hyprland plugin that adds a stable per-workspace window stack.
+<p align="center">
+  <a href="./README.md">English</a> · <a href="./README.ja.md">日本語</a>
+</p>
+
+`hyprstack` is a plugin for [Hyprland](https://github.com/hyprwm/Hyprland) that adds a stable per-workspace window stack.
 
 The goal of `hyprstack` is to make window order a first-class concept.
 
@@ -12,6 +16,10 @@ Hyprland already has multiple ordering concepts such as focus history, z-order, 
 Those are useful, but they are not always the same thing, and they are not always enough to express `next`, `prev`, `last`, and `swap` as one consistent model.
 
 `hyprstack` provides a workspace-local stack model for that.
+
+<p align="center">
+  <img src="./assets/hyprstack-demo.gif" alt="hyprstack demo" width="640">
+</p>
 
 ## What It Does
 
