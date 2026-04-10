@@ -1,8 +1,33 @@
 #include "hyprstack/query_command.hpp"
 
+#include <format>
 #include <sstream>
 
 namespace hyprstack {
+
+namespace {
+
+std::string renderWorkspace(const std::optional<WorkspaceRef>& workspace) {
+    if (!workspace)
+        return "null";
+
+    return std::format(
+        R"json({{
+    "id": {},
+    "name": "{}"
+  }})json",
+        workspace->id, escapeJson(workspace->name)
+    );
+}
+
+std::string renderOptionalAddress(const std::optional<std::string>& address) {
+    if (!address)
+        return "null";
+
+    return std::format(R"json("{}")json", escapeJson(*address));
+}
+
+} // namespace
 
 std::string escapeJson(const std::string_view input) {
     std::string escaped;
@@ -34,30 +59,75 @@ std::vector<std::string> splitArgs(const std::string_view input) {
 }
 
 std::string renderEmptyStackList() {
-    return R"json({
-  "workspace": null,
-  "current": null,
-  "last": null,
-  "windows": []
-})json";
+    return renderStackList(std::nullopt, WorkspaceStack{});
 }
 
 std::string renderEmptyCurrent() {
-    return R"json({
-  "workspace": null,
-  "current": null,
-  "last": null
-})json";
+    return renderCurrent(std::nullopt, WorkspaceStack{});
 }
 
 std::string renderEmptyAround() {
-    return R"json({
-  "workspace": null,
-  "current": null,
-  "prev": null,
-  "next": null,
-  "last": null
-})json";
+    return renderAround(std::nullopt, WorkspaceStack{});
+}
+
+std::string renderStackList(const std::optional<WorkspaceRef>& workspace, const WorkspaceStack& stack) {
+    std::ostringstream windows;
+
+    for (size_t i = 0; i < stack.windows().size(); ++i) {
+        const auto& window = stack.windows()[i];
+
+        if (i != 0)
+            windows << ",\n";
+
+        windows << std::format(
+            R"json(    {{
+      "index": {},
+      "address": "{}",
+      "class": "{}",
+      "title": "{}"
+    }})json",
+            i, escapeJson(window.address), escapeJson(window.className), escapeJson(window.title)
+        );
+    }
+
+    return std::format(
+        R"json({{
+  "workspace": {},
+  "current": {},
+  "last": {},
+  "windows": [
+{}
+  ]
+}})json",
+        renderWorkspace(workspace), renderOptionalAddress(stack.current()), renderOptionalAddress(stack.last()), windows.str()
+    );
+}
+
+std::string renderCurrent(const std::optional<WorkspaceRef>& workspace, const WorkspaceStack& stack) {
+    return std::format(
+        R"json({{
+  "workspace": {},
+  "current": {},
+  "last": {}
+}})json",
+        renderWorkspace(workspace), renderOptionalAddress(stack.current()), renderOptionalAddress(stack.last())
+    );
+}
+
+std::string renderAround(const std::optional<WorkspaceRef>& workspace, const WorkspaceStack& stack) {
+    const auto around = stack.around();
+
+    return std::format(
+        R"json({{
+  "workspace": {},
+  "current": {},
+  "prev": {},
+  "next": {},
+  "last": {}
+}})json",
+        renderWorkspace(workspace), renderOptionalAddress(around.current), renderOptionalAddress(around.prev),
+        renderOptionalAddress(around.next), renderOptionalAddress(around.last)
+    );
 }
 
 std::string renderHelp() {
@@ -75,7 +145,7 @@ notes:
 )help";
 }
 
-std::string handleQueryCommand(const std::vector<std::string>& args) {
+std::string handleQueryCommand(const QuerySnapshot& snapshot, const std::vector<std::string>& args) {
     if (args.empty())
         return renderHelp();
 
@@ -91,15 +161,19 @@ std::string handleQueryCommand(const std::vector<std::string>& args) {
         return renderHelp();
 
     if (args[offset + 1] == "list")
-        return renderEmptyStackList();
+        return renderStackList(snapshot.workspace, snapshot.stack);
 
     if (args[offset + 1] == "current")
-        return renderEmptyCurrent();
+        return renderCurrent(snapshot.workspace, snapshot.stack);
 
     if (args[offset + 1] == "around")
-        return renderEmptyAround();
+        return renderAround(snapshot.workspace, snapshot.stack);
 
     return "unknown hyprstack subcommand: " + escapeJson(args[offset + 1]);
+}
+
+std::string handleQueryCommand(const std::vector<std::string>& args) {
+    return handleQueryCommand(QuerySnapshot{}, args);
 }
 
 } // namespace hyprstack
