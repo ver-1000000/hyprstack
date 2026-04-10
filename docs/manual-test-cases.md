@@ -2,20 +2,15 @@
 
 ## 前提
 
-- Hyprland 上で `hyprstack-dev.so` を load 済み
-- `scripts/query.sh` が実行できる
-
-注意:
-
-- 2026-04-10 時点のこの環境では、`hyprctl plugin unload/load` による hot reload で Hyprland が crash した
-- `hyprpm` は state store 初期化に superuser 権限が必要で、まだ開発フローに組み込めていない
+- Hyprland 上で `hyprstack.so` を load 済み
+- Query API と dispatcher を実行できる
 
 ## 基本確認
 
 1. plugin が load 済みであることを確認する
-2. `scripts/query.sh stack list` を実行する
-3. `scripts/query.sh stack current` を実行する
-4. `scripts/query.sh stack around` を実行する
+2. `hyprctl plugin hyprstack stack list` を実行する
+3. `hyprctl plugin hyprstack stack current` を実行する
+4. `hyprctl plugin hyprstack stack around` を実行する
 
 期待:
 
@@ -26,8 +21,8 @@
 ## empty workspace
 
 1. active workspace を空の workspace に切り替える
-2. `scripts/query.sh stack list` を実行する
-3. `scripts/query.sh stack current` を実行する
+2. `hyprctl plugin hyprstack stack list` を実行する
+3. `hyprctl plugin hyprstack stack current` を実行する
 
 期待:
 
@@ -40,8 +35,8 @@
 1. 同じ workspace に window を 2 つ開く
 2. A を focus する
 3. B を focus する
-4. `scripts/query.sh stack current` を実行する
-5. `scripts/query.sh stack around` を実行する
+4. `hyprctl plugin hyprstack stack current` を実行する
+5. `hyprctl plugin hyprstack stack around` を実行する
 
 期待:
 
@@ -53,8 +48,8 @@
 
 1. 同じ workspace に A, B, C を並べる
 2. A -> B -> C -> B の順で focus する
-3. `scripts/query.sh stack list` を実行する
-4. `scripts/query.sh stack around` を実行する
+3. `hyprctl plugin hyprstack stack list` を実行する
+4. `hyprctl plugin hyprstack stack around` を実行する
 
 期待:
 
@@ -67,9 +62,9 @@
 
 1. 同じ workspace に A, B を置く
 2. A -> B の順で focus する
-3. `scripts/hyprctl-live.sh dispatch stackfocus last` を実行する
-4. `scripts/hyprctl-live.sh dispatch stackfocus next` を実行する
-5. `scripts/hyprctl-live.sh dispatch stackfocus prev` を実行する
+3. `hyprctl dispatch stackfocus last` を実行する
+4. `hyprctl dispatch stackfocus next` を実行する
+5. `hyprctl dispatch stackfocus prev` を実行する
 
 期待:
 
@@ -82,7 +77,7 @@
 1. 同じ workspace に A, B を置く
 2. A -> B の順で focus する
 3. B を閉じる
-4. `scripts/query.sh stack list` を実行する
+4. `hyprctl plugin hyprstack stack list` を実行する
 
 期待:
 
@@ -94,8 +89,8 @@
 
 1. workspace 1 に A, B を置く
 2. B を workspace 2 へ移す
-3. workspace 1 で `scripts/query.sh stack list` を実行する
-4. workspace 2 に移動して `scripts/query.sh stack list` を実行する
+3. workspace 1 で `hyprctl plugin hyprstack stack list` を実行する
+4. workspace 2 に移動して `hyprctl plugin hyprstack stack list` を実行する
 
 期待:
 

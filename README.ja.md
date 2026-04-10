@@ -48,7 +48,10 @@ script や debug 用の読み取り API です。
 
 ```json
 {
-  "workspace": 1,
+  "workspace": {
+    "id": 1,
+    "name": "1"
+  },
   "current": "0x1234567890",
   "last": "0x2345678901",
   "windows": [
