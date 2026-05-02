@@ -100,15 +100,11 @@ bind = SHIFT $mainMod, K, stackswap, prev
 
 ## Installation
 
-### Prerequisites
-
-On Arch Linux, install the packages needed for building and loading the plugin:
-
-```sh
-$ sudo pacman -S --needed git base-devel cmake cpio pkgconf hyprland
-```
-
 ### Install with `hyprpm`
+
+`hyprstack` is intended to be managed with `hyprpm`.
+
+Install and enable it with:
 
 ```sh
 $ hyprpm add https://github.com/ver-1000000/hyprstack.git
@@ -121,7 +117,9 @@ If your Hyprland config does not already load `hyprpm`-managed plugins at startu
 exec-once = hyprpm reload
 ```
 
-### Install manually (build from source)
+### Install manually (for development)
+
+This loads a local build directly.
 
 ```sh
 $ git clone https://github.com/ver-1000000/hyprstack.git

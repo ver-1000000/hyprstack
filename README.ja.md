@@ -100,17 +100,11 @@ bind = SHIFT $mainMod, K, stackswap, prev
 
 ## 導入
 
-### 前提パッケージ
-
-plugin のビルド/読み込みに必要なパッケージを先に入れます。
-
-Arch Linux では次のようになります。
-
-```sh
-$ sudo pacman -S --needed git base-devel cmake cpio pkgconf hyprland
-```
-
 ### `hyprpm` で導入する
+
+`hyprstack` は `hyprpm` での管理を想定したプラグインです。
+
+次の手順でインストールと有効化を行ってください。
 
 ```sh
 $ hyprpm add https://github.com/ver-1000000/hyprstack.git
@@ -123,7 +117,9 @@ $ hyprpm enable hyprstack  # hyprstack を有効化
 exec-once = hyprpm reload
 ```
 
-### 手動で導入する (ソースからビルド)
+### 手動で導入する (開発用)
+
+local build をそのまま読み込むための手順です。
 
 ```sh
 $ git clone https://github.com/ver-1000000/hyprstack.git
