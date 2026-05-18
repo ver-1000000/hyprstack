@@ -8,128 +8,95 @@
   <a href="./README.md">English</a> · <a href="./README.ja.md">日本語</a>
 </p>
 
-`hyprstack` is a plugin for [Hyprland](https://github.com/hyprwm/Hyprland) that adds a stable per-workspace window stack.
+`hyprstack` is a [Hyprland](https://github.com/hyprwm/Hyprland) plugin that adds a stable per-workspace window stack.
 
-The goal of `hyprstack` is to make window order a first-class concept.
-
-Hyprland already has multiple ordering concepts such as focus history, z-order, and layout order.
-Those are useful, but they are not always the same thing, and they are not always enough to express `next`, `prev`, `last`, and `swap` as one consistent model.
-
-`hyprstack` provides a workspace-local stack model for that.
+Hyprland already has focus history, z-order, layout order, and other ordering concepts. `hyprstack` provides a separate stack model for keybind-friendly `next`, `prev`, `last`, and `swap` operations.
 
 <p align="center">
   <img src="./assets/hyprstack-demo.gif" alt="hyprstack demo" width="640">
 </p>
 
-## What It Does
+## Features
 
-`hyprstack` is intended for use cases such as:
-
-- treating `next`, `prev`, and `last` as stable operations
-- accessing window order from keybinds
-- working with a stack model that does not depend on layout or taskbar order
-
-To support that, it provides:
-
-- a stable order per workspace
-- access to the current and previous window
-- query APIs for stack inspection
-- dispatcher APIs for stack actions
-
-## Core Model
-
-Each workspace has its own stack.
-
-Each stack contains:
-
-- a current window
-- a previous window
-- a stable ordered list of windows
-
-This makes it possible to treat window order and window actions through the same model.
-
-## Query API
-
-The query side is intended for scripts, debugging, and integrations.
-
-- `hyprctl hyprstack stack list`
-- `hyprctl hyprstack stack current`
-- `hyprctl hyprstack stack around`
-
-`stack around` returns stable-order neighbors as `prev` and `next`, while `last` remains the last-focused window independently of stable order.
-
-Example output:
-
-```json
-{
-  "workspace": {
-    "id": 1,
-    "name": "1"
-  },
-  "current": "0x1234567890",
-  "last": "0x2345678901",
-  "windows": [
-    { "index": 0, "address": "0x1234567890", "class": "com.mitchellh.ghostty", "title": "tmux" },
-    { "index": 1, "address": "0x2345678901", "class": "thunar", "title": "home" }
-  ]
-}
-```
-
-## Dispatcher API
-
-The dispatcher side is intended for direct keybind integration.
-
-- `stackfocus, next`
-- `stackfocus, prev`
-- `stackfocus, last`
-- `stackswap, next`
-- `stackswap, prev`
-
-`stackswap` swaps the current window with its stable-order neighbor, wraps at the ends, and updates the resulting order for subsequent stack actions.
-
-Example config:
-
-```ini
-bind = $mainMod, J, stackfocus, next
-bind = $mainMod, K, stackfocus, prev
-bind = $mainMod, TAB, stackfocus, last
-
-bind = SHIFT $mainMod, J, stackswap, next
-bind = SHIFT $mainMod, K, stackswap, prev
-```
+- Keeps a stable order per workspace
+- Tracks the current window and the last-focused window
+- Focuses `next`, `prev`, and `last` from keybinds
+- Swaps the current window with its neighbor
+- Exposes stack state through `hyprctl`
 
 ## Installation
 
-### Install with `hyprpm`
-
 `hyprstack` is intended to be managed with `hyprpm`.
 
-Install and enable it with:
-
 ```sh
-$ hyprpm add https://github.com/ver-1000000/hyprstack.git
-$ hyprpm enable hyprstack  # enable hyprstack
+hyprpm add https://github.com/ver-1000000/hyprstack.git
+hyprpm enable hyprstack
 ```
 
-If your Hyprland config does not already load `hyprpm`-managed plugins at startup, add the following line:
+Load `hyprpm` plugins when Hyprland starts.
+
+Lua:
+
+```lua
+hl.on("hyprland.start", function()
+    hl.exec_cmd("hyprpm reload")
+end)
+```
+
+`.conf`:
 
 ```conf
 exec-once = hyprpm reload
 ```
 
-### Install manually (for development)
+## Keybind Examples
 
-This loads a local build directly.
+Lua configs can call stack actions through `hyprctl hyprstack`.
 
-```sh
-$ git clone https://github.com/ver-1000000/hyprstack.git
-$ cd hyprstack
-$ make all                                       # build the plugin
-$ hyprctl plugin load "$PWD/build/hyprstack.so"  # load the built plugin
+```lua
+hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd("hyprctl hyprstack focus last"))
+hl.bind(mainMod .. " + J", hl.dsp.exec_cmd("hyprctl hyprstack focus next"))
+hl.bind(mainMod .. " + K", hl.dsp.exec_cmd("hyprctl hyprstack focus prev"))
+
+hl.bind("SHIFT + " .. mainMod .. " + J", hl.dsp.exec_cmd("hyprctl hyprstack swap next"))
+hl.bind("SHIFT + " .. mainMod .. " + K", hl.dsp.exec_cmd("hyprctl hyprstack swap prev"))
 ```
 
-Then add the following line to your Hyprland config and reload:
+`.conf` configs can call dispatchers directly.
 
-```conf
-plugin = /absolute/path/to/build/hyprstack.so
+```ini
+bind = $mainMod, TAB, stackfocus, last
+bind = $mainMod, J, stackfocus, next
+bind = $mainMod, K, stackfocus, prev
+
+bind = SHIFT $mainMod, J, stackswap, next
+bind = SHIFT $mainMod, K, stackswap, prev
+```
+
+## Query
+
+Use these commands for scripts and debugging.
+
+```sh
+hyprctl hyprstack stack list
+hyprctl hyprstack stack current
+hyprctl hyprstack stack around
+```
+
+`stack around` returns stable-order `prev` / `next` and focus-history-based `last`.
+
+## Floating Stack
+
+`hyprstack` only handles window order and focus/swap actions. Whether windows float and how large they are is Hyprland config responsibility.
+
+For floating stack workflows, opening normal floating windows at a large size is safer than using `maximize` / `fullscreen`.
+
+```lua
+hl.window_rule({
+    name = "floating-stack",
+    match = { class = ".*" },
+    float = true,
+    center = true,
+    size = { "monitor_w * 0.96", "monitor_h * 0.94" }, -- leave some room for bars and outer margins
+})
 ```

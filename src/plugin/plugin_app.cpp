@@ -17,7 +17,23 @@ void PluginApp::reset() {
 }
 
 std::string PluginApp::handleHyprCtl(const std::string& args) {
-    return handleQueryCommand(currentSnapshot(), splitArgs(args));
+    const auto action = splitArgs(args);
+    size_t     offset = 0;
+
+    if (!action.empty() && action[0] == "hyprstack")
+        offset = 1;
+
+    if (action.size() == offset + 2 && action[offset] == "focus") {
+        const auto result = handleStackFocus(action[offset + 1]);
+        return result.success ? "ok" : "error: " + result.error;
+    }
+
+    if (action.size() == offset + 2 && action[offset] == "swap") {
+        const auto result = handleStackSwap(action[offset + 1]);
+        return result.success ? "ok" : "error: " + result.error;
+    }
+
+    return handleQueryCommand(currentSnapshot(), action);
 }
 
 SDispatchResult PluginApp::handleStackFocus(const std::string& args) {

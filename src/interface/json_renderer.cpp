@@ -120,17 +120,21 @@ std::string renderAround(const std::optional<WorkspaceRef>& workspace, const Wor
 }
 
 std::string renderHelp() {
-    return R"help(usage: hyprstack stack <list|current|around>
+    return R"help(usage:
+    hyprstack stack <list|current|around>
+    hyprstack focus <next|prev|last>
+    hyprstack swap <next|prev>
 
 returns:
     stack list       -> stable stack snapshot for the current workspace
     stack current    -> current and last window for the current workspace
     stack around     -> prev/next/last around the current window
+    focus            -> focus a window from the current workspace stack
+    swap             -> swap the current window with a stack neighbor
 
 notes:
     query api v0 is implemented for the active workspace
     responses use the JSON shapes described in the README
-    direct hyprctl invocation is not wired yet in the local environment
 )help";
 }
 

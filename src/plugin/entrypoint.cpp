@@ -85,7 +85,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
         .name        = "hyprstack",
         .description = "Workspace-local stable window stack semantics for Hyprland",
         .author      = "ver-1000000",
-        .version     = "0.1.0",
+        .version     = "0.1.1",
     };
 }
 
