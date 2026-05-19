@@ -24,6 +24,11 @@ Hyprland already has focus history, z-order, layout order, and other ordering co
 - Swaps the current window with its neighbor
 - Exposes stack state through `hyprctl`
 
+## Versioning
+
+`hyprstack` versions use `<tested Hyprland version>.<build>`.
+For example, `0.55.2.1` means build `1`, tested with Hyprland `0.55.2`.
+
 ## Installation
 
 `hyprstack` is intended to be managed with `hyprpm`.
