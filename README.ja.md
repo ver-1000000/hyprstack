@@ -28,7 +28,7 @@ Hyprland には focus history、z-order、layout order など複数の順番概�
 ## バージョン
 
 `hyprstack` の version は `<動作確認したHyprland version>.<build>` です。
-たとえば `0.55.2.1` は、Hyprland `0.55.2` で動作確認した build `1` を表します。
+たとえば `0.56.0.1` は、Hyprland `0.56.0` で動作確認した build `1` を表します。
 
 ## 導入
 
@@ -54,6 +54,20 @@ end)
 ```conf
 exec-once = hyprpm reload
 ```
+
+## Hyprland更新後
+
+`hyprstack` はHyprland内部のplugin APIに対してビルドします。
+Hyprlandを更新した後は、pluginを使う前に起動中のHyprlandセッションから次を実行してください。
+
+```sh
+hyprpm update
+hyprpm reload
+hyprctl plugin list
+```
+
+`hyprpm update` で `hyprstack` のビルドに失敗した場合、そのHyprland versionには未対応です。
+以前のbinaryを強制ロードしないでください。
 
 ## Keybind 例
 

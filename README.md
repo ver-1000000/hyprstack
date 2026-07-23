@@ -54,6 +54,20 @@ end)
 exec-once = hyprpm reload
 ```
 
+## After Updating Hyprland
+
+`hyprstack` is built against Hyprland's internal plugin API.
+After every Hyprland update, run the following from the running Hyprland session before relying on the plugin.
+
+```sh
+hyprpm update
+hyprpm reload
+hyprctl plugin list
+```
+
+If `hyprpm update` fails to build `hyprstack`, that Hyprland version is not yet supported.
+Do not force-load the previous binary.
+
 ## Keybind Examples
 
 Lua configs can call stack actions through `hyprctl hyprstack`.
