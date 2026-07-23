@@ -3,8 +3,11 @@
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/history/WindowHistoryTracker.hpp>
 #include <hyprland/src/desktop/state/FocusState.hpp>
+#include <hyprland/src/desktop/state/WindowState.hpp>
 #include <hyprland/src/desktop/view/Window.hpp>
-#include <hyprland/src/helpers/Monitor.hpp>
+#include <hyprland/src/output/Monitor.hpp>
+#include <hyprland/src/state/MonitorState.hpp>
+#include <hyprland/src/state/WorkspaceState.hpp>
 
 #include <format>
 
@@ -20,7 +23,7 @@ std::optional<int> activeWorkspaceId() {
     if (const auto focusedWindow = Desktop::focusState()->window(); focusedWindow && valid(focusedWindow->m_workspace))
         return static_cast<int>(focusedWindow->m_workspace->m_id);
 
-    for (const auto& monitor : g_pCompositor->m_monitors) {
+    for (const auto& monitor : State::monitorState()->monitors()) {
         if (monitor && valid(monitor->m_activeWorkspace))
             return static_cast<int>(monitor->m_activeWorkspace->m_id);
     }
@@ -33,7 +36,7 @@ std::vector<ObservedWindow> observeWindows() {
     const auto focusedWindow = Desktop::focusState()->window();
     const auto history       = Desktop::History::windowTracker()->fullHistory();
 
-    for (const auto& window : g_pCompositor->m_windows) {
+    for (const auto& window : Desktop::windowState()->windows()) {
         if (!window || !window->m_isMapped || !valid(window->m_workspace))
             continue;
 
@@ -62,7 +65,7 @@ std::vector<ObservedWindow> observeWindows() {
 std::vector<ObservedWorkspace> observeWorkspaces() {
     std::vector<ObservedWorkspace> observed;
 
-    for (const auto& workspaceRef : g_pCompositor->getWorkspaces()) {
+    for (const auto& workspaceRef : State::workspaceState()->workspaceRefs()) {
         const auto workspace = workspaceRef.lock();
 
         if (!valid(workspace))

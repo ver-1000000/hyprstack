@@ -27,7 +27,7 @@ Hyprland already has focus history, z-order, layout order, and other ordering co
 ## Versioning
 
 `hyprstack` versions use `<tested Hyprland version>.<build>`.
-For example, `0.55.2.1` means build `1`, tested with Hyprland `0.55.2`.
+For example, `0.56.0.1` means build `1`, tested with Hyprland `0.56.0`.
 
 ## Installation
 

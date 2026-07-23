@@ -2,9 +2,11 @@
 
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/state/FocusState.hpp>
+#include <hyprland/src/desktop/state/WindowState.hpp>
 #include <hyprland/src/desktop/view/Window.hpp>
 #include <hyprland/src/event/EventBus.hpp>
 #include <hyprland/src/layout/LayoutManager.hpp>
+#include <hyprland/src/managers/fullscreen/FullscreenController.hpp>
 #include <hyprland/src/render/Renderer.hpp>
 
 #include <algorithm>
@@ -18,7 +20,12 @@ PHLWINDOW focusedWindow() {
 }
 
 PHLWINDOW resolveWindowByAddress(const std::string& address) {
-    return g_pCompositor->getWindowByRegex("address:" + address);
+    const auto& windows = Desktop::windowState()->windows();
+    const auto  found   = std::ranges::find_if(windows, [&address](const auto& window) {
+        return window && std::format("0x{:x}", reinterpret_cast<uintptr_t>(window.get())) == address;
+    });
+
+    return found == windows.end() ? nullptr : *found;
 }
 
 SDispatchResult resolveSwapWindows(const std::string& targetAddress, PHLWINDOW& focused, PHLWINDOW& target) {
@@ -43,7 +50,7 @@ SDispatchResult swapLayoutTargets(const std::string& targetAddress) {
     if (!resolution.success)
         return resolution;
 
-    if (focused->isFullscreen())
+    if (Fullscreen::controller()->isFullscreen(focused))
         return makeDispatchError("can't swap fullscreen window");
 
     if (!g_layoutManager)
@@ -54,37 +61,16 @@ SDispatchResult swapLayoutTargets(const std::string& targetAddress) {
     return {};
 }
 
-SDispatchResult swapCompositorOrder(const std::string& targetAddress) {
-    PHLWINDOW focused;
-    PHLWINDOW target;
-    const auto resolution = resolveSwapWindows(targetAddress, focused, target);
-
-    if (!resolution.success)
-        return resolution;
-
-    const auto focusedIt = std::ranges::find(g_pCompositor->m_windows, focused);
-    const auto targetIt  = std::ranges::find(g_pCompositor->m_windows, target);
-
-    if (focusedIt == g_pCompositor->m_windows.end() || targetIt == g_pCompositor->m_windows.end())
-        return makeDispatchError("window is unavailable in compositor order");
-
-    // Waybar taskbar order follows Hyprland's foreign toplevel advertisement order.
-    // In practice that order tracks g_pCompositor->m_windows, so stackswap updates it too.
-    std::iter_swap(focusedIt, targetIt);
-
-    if (focused->m_isMapped)
-        g_pHyprRenderer->damageMonitor(focused->m_monitor.lock());
-
-    if (target->m_isMapped)
-        g_pHyprRenderer->damageMonitor(target->m_monitor.lock());
-
+SDispatchResult swapCompositorOrder(const std::string&) {
+    // Hyprland 0.56 keeps the window order private. Layout target swapping above
+    // is the user-visible ordering change; preserve that without mutating internals.
     return {};
 }
 
 SDispatchResult refreshForeignToplevelForWorkspace(const int workspaceId) {
     std::vector<PHLWINDOW> windows;
 
-    for (const auto& window : g_pCompositor->m_windows) {
+    for (const auto& window : Desktop::windowState()->windows()) {
         if (!window || !window->m_isMapped || !valid(window->m_workspace))
             continue;
 

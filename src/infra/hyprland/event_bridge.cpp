@@ -9,7 +9,7 @@ void HyprlandEventBridge::bind(bool& dirty) {
 
     m_listeners.windowOpen            = events.window.open.listen([&dirty](PHLWINDOW) { dirty = true; });
     m_listeners.windowClose           = events.window.close.listen([&dirty](PHLWINDOW) { dirty = true; });
-    m_listeners.windowDestroy         = events.window.destroy.listen([&dirty](PHLWINDOW) { dirty = true; });
+    m_listeners.windowDestroy         = events.window.destroy.listen([&dirty] { dirty = true; });
     m_listeners.windowActive          = events.window.active.listen([&dirty](PHLWINDOW, Desktop::eFocusReason) { dirty = true; });
     m_listeners.windowTitle           = events.window.title.listen([&dirty](PHLWINDOW) { dirty = true; });
     m_listeners.windowClass           = events.window.class_.listen([&dirty](PHLWINDOW) { dirty = true; });
