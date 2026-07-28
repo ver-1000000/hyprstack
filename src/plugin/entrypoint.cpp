@@ -6,6 +6,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 inline HANDLE                         G_HANDLE                = nullptr;
 inline SP<SHyprCtlCommand>            G_HYPRCTL_COMMAND       = nullptr;
@@ -36,6 +37,17 @@ SDispatchResult onStackSwap(const std::string& args) {
     return G_APP->handleStackSwap(args);
 }
 
+std::string hyprlandClientHash() {
+    const auto stripPatch = [](const std::string_view version) {
+        const auto lastDot = version.find_last_of('.');
+        return lastDot == std::string_view::npos ? std::string{version} : std::string{version.substr(0, lastDot)};
+    };
+
+    return std::string{GIT_COMMIT_HASH} + "_aq_" + stripPatch(AQUAMARINE_VERSION) + "_hu_" + stripPatch(HYPRUTILS_VERSION) +
+           "_hg_" + stripPatch(HYPRGRAPHICS_VERSION) + "_hc_" + stripPatch(HYPRCURSOR_VERSION) + "_hlg_" +
+           stripPatch(HYPRLANG_VERSION);
+}
+
 } // namespace
 
 APICALL EXPORT std::string PLUGIN_API_VERSION() {
@@ -46,13 +58,15 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     G_HANDLE = handle;
 
     const std::string compositorHash = __hyprland_api_get_hash();
-    const std::string clientHash     = __hyprland_api_get_client_hash();
+    const std::string clientHash     = hyprlandClientHash();
 
     if (compositorHash != clientHash) {
         HyprlandAPI::addNotification(
             G_HANDLE, "[hyprstack] Mismatched Hyprland headers. Refusing to load.", CHyprColor{1.0, 0.2, 0.2, 1.0}, 5000
         );
-        throw std::runtime_error("[hyprstack] Version mismatch");
+        throw std::runtime_error(
+            "[hyprstack] Version mismatch: compositor=" + compositorHash + ", client=" + clientHash
+        );
     }
 
     G_APP = std::make_unique<hyprstack::PluginApp>();
@@ -85,7 +99,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
         .name        = "hyprstack",
         .description = "Workspace-local stable window stack semantics for Hyprland",
         .author      = "ver-1000000",
-        .version     = "0.56.0.1",
+        .version     = "0.56.1.1",
     };
 }
 
