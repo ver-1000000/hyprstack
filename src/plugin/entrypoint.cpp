@@ -43,9 +43,9 @@ std::string hyprlandClientHash() {
         return lastDot == std::string_view::npos ? std::string{version} : std::string{version.substr(0, lastDot)};
     };
 
-    return std::string{GIT_COMMIT_HASH} + "_aq_" + stripPatch(AQUAMARINE_VERSION) + "_hu_" + stripPatch(HYPRUTILS_VERSION) +
-           "_hg_" + stripPatch(HYPRGRAPHICS_VERSION) + "_hc_" + stripPatch(HYPRCURSOR_VERSION) + "_hlg_" +
-           stripPatch(HYPRLANG_VERSION);
+    return std::string{GIT_COMMIT_HASH} + "_aq_" + stripPatch(HYPRSTACK_AQUAMARINE_VERSION) + "_hu_" + stripPatch(HYPRSTACK_HYPRUTILS_VERSION) +
+           "_hg_" + stripPatch(HYPRSTACK_HYPRGRAPHICS_VERSION) + "_hc_" + stripPatch(HYPRSTACK_HYPRCURSOR_VERSION) + "_hlg_" +
+           stripPatch(HYPRSTACK_HYPRLANG_VERSION);
 }
 
 } // namespace
@@ -99,7 +99,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
         .name        = "hyprstack",
         .description = "Workspace-local stable window stack semantics for Hyprland",
         .author      = "ver-1000000",
-        .version     = "0.56.1.1",
+        .version     = "0.56.2.1",
     };
 }
 

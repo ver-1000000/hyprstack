@@ -39,6 +39,16 @@ add_library(hyprstack_plugin MODULE
 target_include_directories(hyprstack_plugin PRIVATE include)
 target_compile_options(hyprstack_plugin PRIVATE ${HYPRSTACK_WARNING_FLAGS})
 target_link_libraries(hyprstack_plugin PRIVATE PkgConfig::HYPRLAND)
+# version.h describes Hyprland's original build, not necessarily the dependencies
+# used to rebuild this plugin. hyprpm can reuse it after a dependency-only update.
+foreach(dependency IN ITEMS aquamarine hyprutils hyprgraphics hyprcursor hyprlang)
+    unset(__pkg_config_checked_ABI_${dependency} CACHE)
+    pkg_check_modules(ABI_${dependency} REQUIRED IMPORTED_TARGET ${dependency})
+    target_link_libraries(hyprstack_plugin PRIVATE PkgConfig::ABI_${dependency})
+    string(TOUPPER "${dependency}" dependency_upper)
+    target_compile_definitions(hyprstack_plugin PRIVATE
+        "HYPRSTACK_${dependency_upper}_VERSION=\"${ABI_${dependency}_VERSION}\"")
+endforeach()
 set_target_properties(hyprstack_plugin PROPERTIES
     OUTPUT_NAME hyprstack
     PREFIX ""
@@ -57,3 +67,10 @@ add_executable(tests_runner
 target_include_directories(tests_runner PRIVATE include vendor/catch2)
 target_compile_options(tests_runner PRIVATE ${HYPRSTACK_WARNING_FLAGS})
 set_target_properties(tests_runner PROPERTIES OUTPUT_NAME tests-runner)
+
+enable_testing()
+add_test(NAME unit COMMAND tests_runner)
+add_test(NAME dependency_abi_refresh COMMAND "${CMAKE_COMMAND}"
+    "-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/abi-refresh-test"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/dependency_abi_refresh.cmake")

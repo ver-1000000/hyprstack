@@ -6,7 +6,8 @@ PLUGIN_TAG := v$(PLUGIN_VERSION)
 TESTED_HYPRLAND_VERSION := $(shell printf '%s\n' '$(PLUGIN_VERSION)' | sed 's/\.[^.]*$$//')
 CURRENT_HYPRLAND_VERSION := $(shell Hyprland --version 2>/dev/null | sed -n 's/^Hyprland \([0-9.]*\).*/\1/p')
 
-all: $(BUILD_DIR)/CMakeCache.txt
+all:
+	$(CMAKE) -S . -B $(BUILD_DIR)
 	$(CMAKE) --build $(BUILD_DIR) --target hyprstack_plugin
 
 dev-plugin: all
@@ -17,7 +18,7 @@ $(BUILD_DIR)/CMakeCache.txt: CMakeLists.txt
 
 test: $(BUILD_DIR)/CMakeCache.txt
 	$(CMAKE) --build $(BUILD_DIR) --target tests_runner
-	./$(BUILD_DIR)/tests-runner
+	ctest --test-dir "$(BUILD_DIR)" --output-on-failure
 
 check-version:
 	@test -n "$(PLUGIN_VERSION)"

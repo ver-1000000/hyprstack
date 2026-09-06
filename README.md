@@ -65,8 +65,13 @@ hyprpm reload
 hyprctl plugin list
 ```
 
-If `hyprpm update` fails to build `hyprstack`, that Hyprland version is not yet supported.
+If a build fails, inspect `hyprpm update -v`: unsupported API changes, missing dependencies,
+and build environment problems can all cause failures.
 Do not force-load the previous binary.
+
+Dependency ABI versions come from pkg-config at build time, since Hyprland's cached
+`version.h` can describe dependencies from an older build. The Hyprland commit check
+and rejection of mismatched ABIs remain enabled.
 
 ## Keybind Examples
 

@@ -66,8 +66,13 @@ hyprpm reload
 hyprctl plugin list
 ```
 
-`hyprpm update` で `hyprstack` のビルドに失敗した場合、そのHyprland versionには未対応です。
+`hyprpm update` でビルドに失敗した場合は、`hyprpm update -v` の出力を確認してください。
+未対応のAPI変更だけでなく、依存パッケージやビルド環境の問題でも失敗します。
 以前のbinaryを強制ロードしないでください。
+
+依存ライブラリのABI判定には、ビルド時にpkg-configで取得したversionを使います。
+hyprpmが再利用するHyprlandの`version.h`には、依存更新前の情報が残ることがあるためです。
+Hyprland自体のcommit照合と、ロード時のABI不一致の拒否は維持しています。
 
 ## Keybind 例
 
