@@ -1,13 +1,21 @@
 #include "hyprstack/infra/hyprland/executor.hpp"
 
+#include "hyprstack/infra/hyprland/workspace.hpp"
+#include "hyprstack/infra/hyprland/window.hpp"
+
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/state/FocusState.hpp>
 #include <hyprland/src/desktop/state/WindowState.hpp>
-#include <hyprland/src/desktop/view/Window.hpp>
 #include <hyprland/src/event/EventBus.hpp>
 #include <hyprland/src/layout/LayoutManager.hpp>
 #include <hyprland/src/managers/fullscreen/FullscreenController.hpp>
 #include <hyprland/src/render/Renderer.hpp>
+
+#ifdef HYPRSTACK_HYPRLAND_057
+#include <hyprland/src/config/shared/actions/ConfigActions.hpp>
+#else
+#include <hyprland/src/managers/KeybindManager.hpp>
+#endif
 
 #include <algorithm>
 
@@ -67,14 +75,14 @@ SDispatchResult swapCompositorOrder(const std::string&) {
     return {};
 }
 
-SDispatchResult refreshForeignToplevelForWorkspace(const int workspaceId) {
+SDispatchResult refreshForeignToplevelForWorkspace(const WorkspaceId workspaceId) {
     std::vector<PHLWINDOW> windows;
 
     for (const auto& window : Desktop::windowState()->windows()) {
-        if (!window || !window->m_isMapped || !valid(window->m_workspace))
+        if (!window || !windowMapped(window) || !valid(window->m_workspace))
             continue;
 
-        if (window->m_workspace->m_id != workspaceId)
+        if (hyprstack::workspaceId(window->m_workspace) != workspaceId)
             continue;
 
         windows.push_back(window);
@@ -101,6 +109,21 @@ SDispatchResult makeDispatchError(std::string error) {
 }
 
 SDispatchResult HyprlandExecutor::focusWindowAddress(const std::string& address) const {
+#ifdef HYPRSTACK_HYPRLAND_057
+    const auto window = resolveWindowByAddress(address);
+    if (!window)
+        return makeDispatchError("target window is unavailable");
+
+    const auto focus = Config::Actions::focus(window);
+    if (!focus)
+        return makeDispatchError(focus.error().message);
+
+    const auto raise = Config::Actions::alterZOrder("top", window);
+    if (!raise)
+        return makeDispatchError(raise.error().message);
+
+    return {};
+#else
     if (!g_pKeybindManager)
         return makeDispatchError("hypr keybind manager is unavailable");
 
@@ -125,10 +148,11 @@ SDispatchResult HyprlandExecutor::focusWindowAddress(const std::string& address)
         return zOrderResult;
 
     return focusResult;
+#endif
 }
 
 SDispatchResult HyprlandExecutor::executeStackSwap(
-    const std::string& address, const std::optional<int> workspaceId, StackStore& store, const StackSwapDirection direction
+    const std::string& address, const std::optional<WorkspaceId> workspaceId, StackStore& store, const StackSwapDirection direction
 ) const {
     const auto swapResult = swapLayoutTargets(address);
 

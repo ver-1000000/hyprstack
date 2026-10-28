@@ -15,6 +15,12 @@ void HyprlandEventBridge::bind(bool& dirty) {
     m_listeners.windowClass           = events.window.class_.listen([&dirty](PHLWINDOW) { dirty = true; });
     m_listeners.windowMoveToWorkspace = events.window.moveToWorkspace.listen([&dirty](PHLWINDOW, PHLWORKSPACE) { dirty = true; });
     m_listeners.workspaceActive       = events.workspace.active.listen([&dirty](PHLWORKSPACE) { dirty = true; });
+    m_listeners.specialWorkspaceActive = events.workspace.specialActive.listen([&dirty](PHLWORKSPACE, PHLMONITOR) { dirty = true; });
+    m_listeners.monitorFocused         = events.monitor.focused.listen([&dirty](PHLMONITOR) { dirty = true; });
+#ifdef HYPRSTACK_HYPRLAND_057
+    m_listeners.workspaceRenamed       = events.workspace.renamed.listen([&dirty](PHLWORKSPACEREF) { dirty = true; });
+    m_listeners.propsRefreshed         = events.config.props_refreshed.listen([&dirty](bool) { dirty = true; });
+#endif
 }
 
 void HyprlandEventBridge::reset() {

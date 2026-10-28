@@ -30,6 +30,16 @@ Hyprland には focus history、z-order、layout order など複数の順番概�
 `hyprstack` の version は `<動作確認したHyprland version>.<build>` です。
 たとえば `0.56.0.1` は、Hyprland `0.56.0` で動作確認した build `1` を表します。
 
+## 対応バージョン
+
+現行リリースはHyprland 0.57.0向けで、0.56.2でのソース互換性も維持しています。
+プラグインは実行するHyprlandと同じ環境でビルドしてください。バイナリは共用できません。
+Hyprland 0.57向けのビルドにはC++26対応コンパイラが必要です。
+
+Hyprland 0.57では従来のplugin dispatcher登録が廃止されています。
+下記のLua keybind例(`hyprctl hyprstack focus/swap`)を使ってください。
+`stackfocus` / `stackswap` dispatcherは0.56.2向けのビルドで引き続き利用できます。
+
 ## 導入
 
 `hyprpm` での管理を想定しています。
@@ -49,7 +59,7 @@ hl.on("hyprland.start", function()
 end)
 ```
 
-`.conf`:
+Hyprland 0.56のみ(`.conf`):
 
 ```conf
 exec-once = hyprpm reload
@@ -87,7 +97,7 @@ hl.bind("SHIFT + " .. mainMod .. " + J", hl.dsp.exec_cmd("hyprctl hyprstack swap
 hl.bind("SHIFT + " .. mainMod .. " + K", hl.dsp.exec_cmd("hyprctl hyprstack swap prev"))
 ```
 
-`.conf` では dispatcher を直接呼べます。
+Hyprland 0.56の`.conf`ではdispatcherを直接呼べます。
 
 ```ini
 bind = $mainMod, TAB, stackfocus, last
@@ -109,6 +119,10 @@ hyprctl hyprstack stack around
 ```
 
 `stack around` は stable order 上の `prev` / `next` と、focus history 由来の `last` を返します。
+
+Hyprland 0.57では`workspace.id`が、番号付きworkspaceなら数値、名前付き・special workspaceなら
+識別用の文字列(例: `"notes"`、`"special:notes"`)になります。`workspace.name`は表示名です。
+0.56では従来どおり数値を返します。スクリプトでは数値と文字列の両方を受け入れてください。
 
 ## Floating Stack
 

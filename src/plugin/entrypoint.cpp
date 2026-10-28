@@ -8,21 +8,33 @@
 #include <string>
 #include <string_view>
 
-inline HANDLE                         G_HANDLE                = nullptr;
-inline SP<SHyprCtlCommand>            G_HYPRCTL_COMMAND       = nullptr;
-inline std::unique_ptr<hyprstack::PluginApp> G_APP           = nullptr;
-inline bool                           G_STACKFOCUS_REGISTERED = false;
-inline bool                           G_STACKSWAP_REGISTERED  = false;
+inline HANDLE G_HANDLE = nullptr;
+#ifdef HYPRSTACK_HYPRLAND_057
+inline SP<IPC::Socket1::SCommand> G_HYPRCTL_COMMAND = nullptr;
+#else
+inline SP<SHyprCtlCommand> G_HYPRCTL_COMMAND = nullptr;
+#endif
+inline std::unique_ptr<hyprstack::PluginApp> G_APP = nullptr;
+#ifndef HYPRSTACK_HYPRLAND_057
+inline bool G_STACKFOCUS_REGISTERED = false;
+inline bool G_STACKSWAP_REGISTERED = false;
+#endif
 
 namespace {
 
+#ifdef HYPRSTACK_HYPRLAND_057
+IPC::Socket1::SResponse onHyprCtl(const IPC::Socket1::SRequest& request) {
+    const auto& args = request.command;
+#else
 std::string onHyprCtl([[maybe_unused]] const eHyprCtlOutputFormat format, const std::string args) {
+#endif
     if (!G_APP)
         return "hyprstack unavailable";
 
     return G_APP->handleHyprCtl(args);
 }
 
+#ifndef HYPRSTACK_HYPRLAND_057
 SDispatchResult onStackFocus(const std::string& args) {
     if (!G_APP)
         return hyprstack::makeDispatchError("plugin app is unavailable");
@@ -36,6 +48,7 @@ SDispatchResult onStackSwap(const std::string& args) {
 
     return G_APP->handleStackSwap(args);
 }
+#endif
 
 std::string hyprlandClientHash() {
     const auto stripPatch = [](const std::string_view version) {
@@ -75,14 +88,20 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
         G_HANDLE,
         {
             .name  = "hyprstack",
+#ifdef HYPRSTACK_HYPRLAND_057
+            .match = IPC::Socket1::COMMAND_MATCH_PREFIX,
+            .handler = onHyprCtl,
+#else
             .exact = false,
             .fn    = onHyprCtl,
+#endif
         }
     );
 
     if (!G_HYPRCTL_COMMAND)
         throw std::runtime_error("[hyprstack] Failed to register hyprctl command");
 
+#ifndef HYPRSTACK_HYPRLAND_057
     G_STACKFOCUS_REGISTERED = HyprlandAPI::addDispatcherV2(G_HANDLE, "stackfocus", onStackFocus);
 
     if (!G_STACKFOCUS_REGISTERED)
@@ -92,6 +111,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 
     if (!G_STACKSWAP_REGISTERED)
         throw std::runtime_error("[hyprstack] Failed to register stackswap dispatcher");
+#endif
 
     G_APP->bindEvents();
 
@@ -99,7 +119,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
         .name        = "hyprstack",
         .description = "Workspace-local stable window stack semantics for Hyprland",
         .author      = "ver-1000000",
-        .version     = "0.56.2.1",
+        .version     = "0.57.0.1",
     };
 }
 
@@ -107,6 +127,7 @@ APICALL EXPORT void PLUGIN_EXIT() {
     if (G_APP)
         G_APP->reset();
 
+#ifndef HYPRSTACK_HYPRLAND_057
     if (G_HANDLE && G_STACKFOCUS_REGISTERED) {
         HyprlandAPI::removeDispatcher(G_HANDLE, "stackfocus");
         G_STACKFOCUS_REGISTERED = false;
@@ -116,6 +137,7 @@ APICALL EXPORT void PLUGIN_EXIT() {
         HyprlandAPI::removeDispatcher(G_HANDLE, "stackswap");
         G_STACKSWAP_REGISTERED = false;
     }
+#endif
 
     if (G_HANDLE && G_HYPRCTL_COMMAND) {
         HyprlandAPI::unregisterHyprCtlCommand(G_HANDLE, G_HYPRCTL_COMMAND);

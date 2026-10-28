@@ -1,9 +1,14 @@
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <string>
+#include <variant>
 
 namespace hyprstack {
+
+// Numbered workspace IDs and addressable names for named/special workspaces.
+using WorkspaceId = std::variant<int64_t, std::string>;
 
 struct StackWindow {
     std::string address;

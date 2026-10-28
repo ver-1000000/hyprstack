@@ -29,8 +29,8 @@ WorkspaceRef asWorkspaceRef(const ObservedWindow& window) {
     };
 }
 
-std::vector<int> observedWorkspaceIds(const std::vector<ObservedWorkspace>& workspaces) {
-    std::vector<int> workspaceIds;
+std::vector<WorkspaceId> observedWorkspaceIds(const std::vector<ObservedWorkspace>& workspaces) {
+    std::vector<WorkspaceId> workspaceIds;
     workspaceIds.reserve(workspaces.size());
 
     for (const auto& workspace : workspaces)
@@ -68,7 +68,7 @@ void StateSyncService::sync(StackStore& store, const ObservedSnapshot& snapshot)
             stack.focusWindow(asStackWindow(window));
     }
 
-    for (const int workspaceId : store.workspaceIds()) {
+    for (const auto& workspaceId : store.workspaceIds()) {
         std::vector<ObservedWindow> workspaceWindows;
         std::vector<std::string>    presentAddresses;
 

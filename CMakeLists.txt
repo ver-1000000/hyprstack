@@ -8,6 +8,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(PkgConfig REQUIRED)
+# hyprpm reuses the build directory across compositor upgrades.
+unset(__pkg_config_checked_HYPRLAND CACHE)
 pkg_check_modules(HYPRLAND REQUIRED IMPORTED_TARGET hyprland)
 
 set(HYPRSTACK_WARNING_FLAGS
@@ -37,6 +39,10 @@ add_library(hyprstack_plugin MODULE
 )
 
 target_include_directories(hyprstack_plugin PRIVATE include)
+if(HYPRLAND_VERSION VERSION_GREATER_EQUAL "0.57.0")
+    target_compile_definitions(hyprstack_plugin PRIVATE HYPRSTACK_HYPRLAND_057)
+    target_compile_features(hyprstack_plugin PRIVATE cxx_std_26)
+endif()
 target_compile_options(hyprstack_plugin PRIVATE ${HYPRSTACK_WARNING_FLAGS})
 target_link_libraries(hyprstack_plugin PRIVATE PkgConfig::HYPRLAND)
 # version.h describes Hyprland's original build, not necessarily the dependencies

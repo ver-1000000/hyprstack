@@ -128,3 +128,11 @@ TEST_CASE("renderAround renders current stable neighbors") {
   "last": "0x3"
 })json");
 }
+
+TEST_CASE("Workspace JSON preserves large numeric IDs and escapes addressable names") {
+    const auto numeric = hyprstack::renderStackList(hyprstack::WorkspaceRef{.id = int64_t{4294967295}, .name = "Large"}, {});
+    REQUIRE(numeric.find("\"id\": 4294967295") != std::string::npos);
+
+    const auto named = hyprstack::renderStackList(hyprstack::WorkspaceRef{.id = std::string{"special:quo\"te"}, .name = "Notes"}, {});
+    REQUIRE(named.find("\"id\": \"special:quo\\\"te\"") != std::string::npos);
+}

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hyprstack/domain/stack_types.hpp"
+
 #include <optional>
 #include <string>
 #include <vector>
@@ -7,7 +9,7 @@
 namespace hyprstack {
 
 struct ObservedWindow {
-    int                   workspaceId;
+    WorkspaceId           workspaceId;
     std::string           workspaceName;
     std::string           address;
     std::string           className;
@@ -17,14 +19,14 @@ struct ObservedWindow {
 };
 
 struct ObservedWorkspace {
-    int         id;
+    WorkspaceId id;
     std::string name;
 };
 
 struct ObservedSnapshot {
     std::vector<ObservedWindow>    windows;
     std::vector<ObservedWorkspace> workspaces;
-    std::optional<int>             activeWorkspaceId;
+    std::optional<WorkspaceId>     activeWorkspaceId;
 };
 
 } // namespace hyprstack

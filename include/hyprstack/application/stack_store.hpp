@@ -9,7 +9,7 @@
 namespace hyprstack {
 
 struct WorkspaceRef {
-    int         id;
+    WorkspaceId id;
     std::string name;
 };
 
@@ -20,18 +20,18 @@ struct QuerySnapshot {
 
 class StackStore {
   public:
-    void setActiveWorkspaceId(std::optional<int> workspaceId);
+    void setActiveWorkspaceId(std::optional<WorkspaceId> workspaceId);
     void upsertWorkspace(const WorkspaceRef& workspace);
     WorkspaceStack& ensureWorkspace(const WorkspaceRef& workspace);
-    WorkspaceStack* findWorkspaceStack(int workspaceId);
-    const WorkspaceStack* findWorkspaceStack(int workspaceId) const;
-    std::optional<WorkspaceRef> findWorkspaceRef(int workspaceId) const;
-    void removeMissingWindows(int workspaceId, const std::vector<std::string>& presentAddresses);
-    void pruneEmptyWorkspaces(const std::vector<int>& observedWorkspaceIds);
-    [[nodiscard]] std::vector<int> workspaceIds() const;
-    [[nodiscard]] QuerySnapshot snapshotForWorkspace(std::optional<int> workspaceId = std::nullopt) const;
-    bool swapCurrentWithNext(std::optional<int> workspaceId = std::nullopt);
-    bool swapCurrentWithPrev(std::optional<int> workspaceId = std::nullopt);
+    WorkspaceStack* findWorkspaceStack(WorkspaceId workspaceId);
+    const WorkspaceStack* findWorkspaceStack(WorkspaceId workspaceId) const;
+    std::optional<WorkspaceRef> findWorkspaceRef(WorkspaceId workspaceId) const;
+    void removeMissingWindows(WorkspaceId workspaceId, const std::vector<std::string>& presentAddresses);
+    void pruneEmptyWorkspaces(const std::vector<WorkspaceId>& observedWorkspaceIds);
+    [[nodiscard]] std::vector<WorkspaceId> workspaceIds() const;
+    [[nodiscard]] QuerySnapshot snapshotForWorkspace(std::optional<WorkspaceId> workspaceId = std::nullopt) const;
+    bool swapCurrentWithNext(std::optional<WorkspaceId> workspaceId = std::nullopt);
+    bool swapCurrentWithPrev(std::optional<WorkspaceId> workspaceId = std::nullopt);
 
   private:
     struct WorkspaceEntry {
@@ -40,11 +40,11 @@ class StackStore {
     };
 
     std::vector<WorkspaceEntry> m_workspaces;
-    std::optional<int>          m_activeWorkspaceId;
+    std::optional<WorkspaceId>  m_activeWorkspaceId;
 
-    WorkspaceEntry*             findEntry(int workspaceId);
-    const WorkspaceEntry*       findEntry(int workspaceId) const;
-    [[nodiscard]] std::optional<int> resolveWorkspaceId(std::optional<int> workspaceId) const;
+    WorkspaceEntry*             findEntry(WorkspaceId workspaceId);
+    const WorkspaceEntry*       findEntry(WorkspaceId workspaceId) const;
+    [[nodiscard]] std::optional<WorkspaceId> resolveWorkspaceId(std::optional<WorkspaceId> workspaceId) const;
 };
 
 } // namespace hyprstack

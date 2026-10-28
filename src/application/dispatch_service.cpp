@@ -116,7 +116,7 @@ std::optional<StackSwapDirection> parseStackSwapDirection(const std::string_view
     return std::nullopt;
 }
 
-bool applyStackSwap(StackStore& store, const StackSwapDirection direction, const std::optional<int> workspaceId) {
+bool applyStackSwap(StackStore& store, const StackSwapDirection direction, const std::optional<WorkspaceId> workspaceId) {
     switch (direction) {
         case StackSwapDirection::Next: return store.swapCurrentWithNext(workspaceId);
         case StackSwapDirection::Prev: return store.swapCurrentWithPrev(workspaceId);

@@ -6,7 +6,7 @@
 #include "hyprstack/infra/hyprland/executor.hpp"
 #include "hyprstack/infra/hyprland/observer.hpp"
 
-#include <hyprland/src/managers/KeybindManager.hpp>
+#include <hyprland/src/SharedDefs.hpp>
 
 #include <string>
 

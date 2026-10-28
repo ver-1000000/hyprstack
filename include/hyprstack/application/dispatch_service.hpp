@@ -23,7 +23,7 @@ struct StackDispatchResolution {
 [[nodiscard]] StackDispatchResolution resolveStackFocusTarget(const WorkspaceStack& stack, std::string_view arg);
 [[nodiscard]] StackDispatchResolution resolveStackSwapTarget(const WorkspaceStack& stack, std::string_view arg);
 [[nodiscard]] std::optional<StackSwapDirection> parseStackSwapDirection(std::string_view arg);
-[[nodiscard]] bool applyStackSwap(StackStore& store, StackSwapDirection direction, std::optional<int> workspaceId);
+[[nodiscard]] bool applyStackSwap(StackStore& store, StackSwapDirection direction, std::optional<WorkspaceId> workspaceId);
 [[nodiscard]] std::string stackSwapFailureMessage(StackSwapDirection direction);
 
 } // namespace hyprstack

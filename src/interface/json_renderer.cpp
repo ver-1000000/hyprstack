@@ -2,6 +2,7 @@
 
 #include <format>
 #include <sstream>
+#include <type_traits>
 
 namespace hyprstack {
 
@@ -16,7 +17,16 @@ std::string renderWorkspace(const std::optional<WorkspaceRef>& workspace) {
     "id": {},
     "name": "{}"
   }})json",
-        workspace->id, escapeJson(workspace->name)
+        std::visit(
+            [](const auto& id) -> std::string {
+                if constexpr (std::is_same_v<std::decay_t<decltype(id)>, std::string>)
+                    return std::format(R"("{}")", escapeJson(id));
+                else
+                    return std::to_string(id);
+            },
+            workspace->id
+        ),
+        escapeJson(workspace->name)
     );
 }
 

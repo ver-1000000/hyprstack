@@ -29,6 +29,16 @@ Hyprland already has focus history, z-order, layout order, and other ordering co
 `hyprstack` versions use `<tested Hyprland version>.<build>`.
 For example, `0.56.0.1` means build `1`, tested with Hyprland `0.56.0`.
 
+## Compatibility
+
+The current release targets Hyprland 0.57.0 and retains source compatibility with 0.56.2.
+Build the plugin against the exact Hyprland installation you run; binaries are not interchangeable.
+Hyprland 0.57 builds require a C++26-capable compiler.
+
+Hyprland 0.57 no longer registers legacy plugin dispatchers. Use the Lua keybind examples
+below (`hyprctl hyprstack focus/swap`); direct `stackfocus` / `stackswap` dispatchers
+remain available when built for 0.56.2.
+
 ## Installation
 
 `hyprstack` is intended to be managed with `hyprpm`.
@@ -48,7 +58,7 @@ hl.on("hyprland.start", function()
 end)
 ```
 
-`.conf`:
+Hyprland 0.56 only (`.conf`):
 
 ```conf
 exec-once = hyprpm reload
@@ -86,7 +96,7 @@ hl.bind("SHIFT + " .. mainMod .. " + J", hl.dsp.exec_cmd("hyprctl hyprstack swap
 hl.bind("SHIFT + " .. mainMod .. " + K", hl.dsp.exec_cmd("hyprctl hyprstack swap prev"))
 ```
 
-`.conf` configs can call dispatchers directly.
+On Hyprland 0.56, `.conf` configs can call dispatchers directly.
 
 ```ini
 bind = $mainMod, TAB, stackfocus, last
@@ -108,6 +118,11 @@ hyprctl hyprstack stack around
 ```
 
 `stack around` returns stable-order `prev` / `next` and focus-history-based `last`.
+
+On Hyprland 0.57, `workspace.id` is a number for numbered workspaces and an
+addressable string for named/special workspaces (for example, `"notes"` or
+`"special:notes"`). `workspace.name` is the display name. On 0.56, IDs remain numeric.
+Scripts should accept both JSON number and string IDs.
 
 ## Floating Stack
 

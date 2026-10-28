@@ -52,7 +52,8 @@ The plugin layer wires everything together.
 `PluginApp` owns the runtime state, refreshes it on demand, and serves both:
 
 - `hyprctl hyprstack ...` queries
-- dispatcher entrypoints such as `stackfocus` and `stackswap`
+- `hyprctl hyprstack focus/swap` actions
+- legacy dispatcher entrypoints (`stackfocus` / `stackswap`) on Hyprland 0.56
 
 The exported plugin entrypoint is kept thin and delegates runtime behavior to `PluginApp`.
 
@@ -76,3 +77,37 @@ In practice, that means:
 - Hyprland integration stays isolated
 - entrypoint code remains mostly wiring
 - query and dispatch behavior can evolve without reshaping the whole plugin
+
+## Hyprland compatibility
+
+CMake selects the 0.56 or 0.57 adapter API using pkg-config and refreshes that
+selection when an existing build directory is reused. The 0.57 adapter uses
+Socket1 requests, Config Actions, and the public window metadata API. Hyprland
+0.57's legacy dispatcher registration functions return false, so only the
+hyprctl command is registered on that version.
+
+Workspace IDs are `variant<int64_t, string>`: numeric IDs stay numeric, while
+0.57 named/special workspaces use their addressable names. Display names are
+metadata and are never used to identify stacks. Numeric IDs are not narrowed
+to `int`, and special workspaces retain their `special:` prefix.
+
+## Validation
+
+`make test` runs the model/query tests and CMake cache refresh regression checks.
+To test a locally built Hyprland 0.57 without replacing the desktop session:
+
+```sh
+python tests/hyprland_smoke.py \
+  --hyprland /path/to/Hyprland \
+  --plugin /path/to/hyprstack.so
+```
+
+The smoke test requires `kitty`, starts a private compositor with its
+own runtime directory, and exercises load/unload, queries, focus, swapping,
+named/special workspaces, and reload. It stops all test processes on exit and
+writes the compositor log to `build/smoke-0.57.0.log`.
+
+If the graphics backend cannot start headless, pass
+`--parent-display /run/user/1000/wayland-1` (use your actual Wayland socket).
+This opens a temporary nested compositor window while keeping the test plugin
+and clients in their own session.

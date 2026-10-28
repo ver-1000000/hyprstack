@@ -5,7 +5,7 @@
 
 namespace hyprstack {
 
-void StackStore::setActiveWorkspaceId(const std::optional<int> workspaceId) {
+void StackStore::setActiveWorkspaceId(const std::optional<WorkspaceId> workspaceId) {
     m_activeWorkspaceId = workspaceId;
 }
 
@@ -26,7 +26,7 @@ WorkspaceStack& StackStore::ensureWorkspace(const WorkspaceRef& workspace) {
     return findEntry(workspace.id)->stack;
 }
 
-WorkspaceStack* StackStore::findWorkspaceStack(const int workspaceId) {
+WorkspaceStack* StackStore::findWorkspaceStack(const WorkspaceId workspaceId) {
     auto* entry = findEntry(workspaceId);
 
     if (!entry)
@@ -35,7 +35,7 @@ WorkspaceStack* StackStore::findWorkspaceStack(const int workspaceId) {
     return &entry->stack;
 }
 
-const WorkspaceStack* StackStore::findWorkspaceStack(const int workspaceId) const {
+const WorkspaceStack* StackStore::findWorkspaceStack(const WorkspaceId workspaceId) const {
     const auto* entry = findEntry(workspaceId);
 
     if (!entry)
@@ -44,7 +44,7 @@ const WorkspaceStack* StackStore::findWorkspaceStack(const int workspaceId) cons
     return &entry->stack;
 }
 
-std::optional<WorkspaceRef> StackStore::findWorkspaceRef(const int workspaceId) const {
+std::optional<WorkspaceRef> StackStore::findWorkspaceRef(const WorkspaceId workspaceId) const {
     const auto* entry = findEntry(workspaceId);
 
     if (!entry)
@@ -53,7 +53,7 @@ std::optional<WorkspaceRef> StackStore::findWorkspaceRef(const int workspaceId) 
     return entry->workspace;
 }
 
-void StackStore::removeMissingWindows(const int workspaceId, const std::vector<std::string>& presentAddresses) {
+void StackStore::removeMissingWindows(const WorkspaceId workspaceId, const std::vector<std::string>& presentAddresses) {
     auto* stack = findWorkspaceStack(workspaceId);
 
     if (!stack)
@@ -70,14 +70,14 @@ void StackStore::removeMissingWindows(const int workspaceId, const std::vector<s
         stack->removeWindow(address);
 }
 
-void StackStore::pruneEmptyWorkspaces(const std::vector<int>& observedWorkspaceIds) {
+void StackStore::pruneEmptyWorkspaces(const std::vector<WorkspaceId>& observedWorkspaceIds) {
     std::erase_if(m_workspaces, [&observedWorkspaceIds](const WorkspaceEntry& entry) {
         return entry.stack.windows().empty() && !std::ranges::contains(observedWorkspaceIds, entry.workspace.id);
     });
 }
 
-std::vector<int> StackStore::workspaceIds() const {
-    std::vector<int> workspaceIds;
+std::vector<WorkspaceId> StackStore::workspaceIds() const {
+    std::vector<WorkspaceId> workspaceIds;
     workspaceIds.reserve(m_workspaces.size());
 
     for (const auto& entry : m_workspaces)
@@ -86,7 +86,7 @@ std::vector<int> StackStore::workspaceIds() const {
     return workspaceIds;
 }
 
-QuerySnapshot StackStore::snapshotForWorkspace(const std::optional<int> workspaceId) const {
+QuerySnapshot StackStore::snapshotForWorkspace(const std::optional<WorkspaceId> workspaceId) const {
     const auto targetWorkspaceId = resolveWorkspaceId(workspaceId);
 
     if (!targetWorkspaceId)
@@ -103,7 +103,7 @@ QuerySnapshot StackStore::snapshotForWorkspace(const std::optional<int> workspac
     };
 }
 
-bool StackStore::swapCurrentWithNext(const std::optional<int> workspaceId) {
+bool StackStore::swapCurrentWithNext(const std::optional<WorkspaceId> workspaceId) {
     const auto targetWorkspaceId = resolveWorkspaceId(workspaceId);
 
     if (!targetWorkspaceId)
@@ -117,7 +117,7 @@ bool StackStore::swapCurrentWithNext(const std::optional<int> workspaceId) {
     return stack->swapCurrentWithNext();
 }
 
-bool StackStore::swapCurrentWithPrev(const std::optional<int> workspaceId) {
+bool StackStore::swapCurrentWithPrev(const std::optional<WorkspaceId> workspaceId) {
     const auto targetWorkspaceId = resolveWorkspaceId(workspaceId);
 
     if (!targetWorkspaceId)
@@ -131,7 +131,7 @@ bool StackStore::swapCurrentWithPrev(const std::optional<int> workspaceId) {
     return stack->swapCurrentWithPrev();
 }
 
-StackStore::WorkspaceEntry* StackStore::findEntry(const int workspaceId) {
+StackStore::WorkspaceEntry* StackStore::findEntry(const WorkspaceId workspaceId) {
     const auto iter = std::ranges::find(m_workspaces, workspaceId, [](const WorkspaceEntry& entry) { return entry.workspace.id; });
 
     if (iter == m_workspaces.end())
@@ -140,7 +140,7 @@ StackStore::WorkspaceEntry* StackStore::findEntry(const int workspaceId) {
     return &(*iter);
 }
 
-const StackStore::WorkspaceEntry* StackStore::findEntry(const int workspaceId) const {
+const StackStore::WorkspaceEntry* StackStore::findEntry(const WorkspaceId workspaceId) const {
     const auto iter = std::ranges::find(m_workspaces, workspaceId, [](const WorkspaceEntry& entry) { return entry.workspace.id; });
 
     if (iter == m_workspaces.end())
@@ -149,7 +149,7 @@ const StackStore::WorkspaceEntry* StackStore::findEntry(const int workspaceId) c
     return &(*iter);
 }
 
-std::optional<int> StackStore::resolveWorkspaceId(const std::optional<int> workspaceId) const {
+std::optional<WorkspaceId> StackStore::resolveWorkspaceId(const std::optional<WorkspaceId> workspaceId) const {
     return workspaceId.or_else([this]() { return m_activeWorkspaceId; });
 }
 

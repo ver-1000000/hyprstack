@@ -21,7 +21,7 @@ TEST_CASE("PluginState builds active workspace snapshot from observed windows") 
     const auto snapshot = state.snapshotForWorkspace();
 
     REQUIRE(snapshot.workspace.has_value());
-    REQUIRE(snapshot.workspace->id == 1);
+    REQUIRE(snapshot.workspace->id == hyprstack::WorkspaceId{1});
     REQUIRE(snapshot.stack.windows().size() == 2);
     REQUIRE(snapshot.stack.current() == std::optional<std::string>{"0x2"});
     REQUIRE(snapshot.stack.last() == std::optional<std::string>{"0x1"});
@@ -120,7 +120,7 @@ TEST_CASE("PluginState falls back to explicit workspace when active workspace is
 
     REQUIRE_FALSE(activeSnapshot.workspace.has_value());
     REQUIRE(explicitSnapshot.workspace.has_value());
-    REQUIRE(explicitSnapshot.workspace->id == 7);
+    REQUIRE(explicitSnapshot.workspace->id == hyprstack::WorkspaceId{7});
     REQUIRE(explicitSnapshot.stack.windows().size() == 1);
 }
 
@@ -195,7 +195,7 @@ TEST_CASE("PluginState keeps empty active workspace metadata") {
     const auto snapshot = state.snapshotForWorkspace();
 
     REQUIRE(snapshot.workspace.has_value());
-    REQUIRE(snapshot.workspace->id == 9);
+    REQUIRE(snapshot.workspace->id == hyprstack::WorkspaceId{9});
     REQUIRE(snapshot.workspace->name == "9");
     REQUIRE(snapshot.stack.windows().empty());
     REQUIRE_FALSE(snapshot.stack.current().has_value());

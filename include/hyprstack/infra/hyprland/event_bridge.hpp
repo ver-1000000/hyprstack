@@ -19,6 +19,12 @@ class HyprlandEventBridge {
         CHyprSignalListener windowClass;
         CHyprSignalListener windowMoveToWorkspace;
         CHyprSignalListener workspaceActive;
+        CHyprSignalListener specialWorkspaceActive;
+        CHyprSignalListener monitorFocused;
+#ifdef HYPRSTACK_HYPRLAND_057
+        CHyprSignalListener workspaceRenamed;
+        CHyprSignalListener propsRefreshed;
+#endif
     };
 
     ListenerSet m_listeners;

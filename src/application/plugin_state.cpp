@@ -3,7 +3,7 @@
 namespace hyprstack {
 
 void PluginState::sync(
-    const std::vector<ObservedWindow>& windows, const std::vector<ObservedWorkspace>& workspaces, const std::optional<int> activeWorkspaceId
+    const std::vector<ObservedWindow>& windows, const std::vector<ObservedWorkspace>& workspaces, const std::optional<WorkspaceId> activeWorkspaceId
 ) {
     m_syncService.sync(m_store, ObservedSnapshot{
                                     .windows           = windows,
@@ -12,15 +12,15 @@ void PluginState::sync(
                                 });
 }
 
-QuerySnapshot PluginState::snapshotForWorkspace(const std::optional<int> workspaceId) const {
+QuerySnapshot PluginState::snapshotForWorkspace(const std::optional<WorkspaceId> workspaceId) const {
     return m_store.snapshotForWorkspace(workspaceId);
 }
 
-bool PluginState::swapCurrentWithNext(const std::optional<int> workspaceId) {
+bool PluginState::swapCurrentWithNext(const std::optional<WorkspaceId> workspaceId) {
     return m_store.swapCurrentWithNext(workspaceId);
 }
 
-bool PluginState::swapCurrentWithPrev(const std::optional<int> workspaceId) {
+bool PluginState::swapCurrentWithPrev(const std::optional<WorkspaceId> workspaceId) {
     return m_store.swapCurrentWithPrev(workspaceId);
 }
 
